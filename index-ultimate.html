@@ -2,8 +2,23 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Runner">
+  <meta name="theme-color" content="#0f172a">
   <title>Runner Dashboard ULTIME</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icon-192.png">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -32,6 +47,68 @@
       scrollbar-color: #334155 transparent;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* iOS Safe Area Support */
+    body {
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+      .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        z-index: 50;
+        padding: 0.5rem;
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+      }
+
+      .sidebar-link {
+        flex-direction: column;
+        min-width: 60px;
+        padding: 0.5rem;
+        text-align: center;
+        font-size: 0.7rem;
+      }
+
+      .sidebar-link i {
+        margin: 0 0 0.25rem 0;
+      }
+
+      main {
+        margin-left: 0;
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+      }
+
+      header {
+        padding: 1rem;
+      }
+
+      .glass {
+        padding: 1rem !important;
+      }
+
+      .grid {
+        gap: 0.75rem !important;
+      }
+    }
+
+    /* Touch optimizations */
+    button, a, .card-hover {
+      -webkit-user-select: none;
+      user-select: none;
+      touch-action: manipulation;
     }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -333,6 +410,24 @@
   </main>
 
 <script src="ultimate.js"></script>
+
+<script>
+  // Register Service Worker for PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => console.log('SW registered:', registration))
+        .catch(err => console.log('SW registration failed:', err));
+    });
+  }
+
+  // Add to home screen prompt
+  let deferredPrompt;
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+</script>
 
 </body>
 </html>

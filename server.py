@@ -40,6 +40,38 @@ def ultimate_js():
         response.headers['Expires'] = '0'
         return response
 
+@app.route('/manifest.json')
+def manifest():
+    with open('manifest.json', 'r', encoding='utf-8') as f:
+        response = make_response(f.read())
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
+@app.route('/sw.js')
+def service_worker():
+    with open('sw.js', 'r', encoding='utf-8') as f:
+        response = make_response(f.read())
+        response.headers['Content-Type'] = 'application/javascript'
+        response.headers['Cache-Control'] = 'no-cache'
+        return response
+
+@app.route('/icon-192.png')
+def icon_192():
+    # Pour l'instant, on redirige vers l'icône SVG
+    # Tu devras convertir le SVG en PNG ou utiliser un service comme cloudinary
+    return redirect('/icon.svg')
+
+@app.route('/icon-512.png')
+def icon_512():
+    return redirect('/icon.svg')
+
+@app.route('/icon.svg')
+def icon_svg():
+    with open('icon.svg', 'r', encoding='utf-8') as f:
+        response = make_response(f.read())
+        response.headers['Content-Type'] = 'image/svg+xml'
+        return response
+
 @app.route('/debug')
 def debug():
     """Debug page to check auth status"""

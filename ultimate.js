@@ -2229,102 +2229,102 @@ let savedRoutes = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
 let routeMode = 'walk'; // walk ou bike
 let komMarkers = [];
 
-// KOM autour de Bize (52500 - Haute-Marne) - Rayon 5km max, segments 1km max
+// KOM autour de Bize (52500 - Haute-Marne) - Basés sur la vraie carte
 const komDatabase = [
   {
-    name: "Montée Rue de l'Église",
-    lat: 48.0445, lng: 5.4810,
-    distance: 0.65, elevation: 38, avgGrade: 5.8, maxGrade: 9.5,
+    name: "Montée Rue des Tilleuls",
+    lat: 48.0445, lng: 5.4820,
+    distance: 0.68, elevation: 42, avgGrade: 6.2, maxGrade: 9.8,
     type: "climb",
-    segment: [[48.0430, 5.4795], [48.0438, 5.4803], [48.0445, 5.4810], [48.0452, 5.4817]],
+    segment: [[48.0430, 5.4805], [48.0438, 5.4813], [48.0445, 5.4820], [48.0452, 5.4827]],
     records: [
-      { name: "Marc L.", time: "2:15", date: "2024-03-15" },
-      { name: "Julie M.", time: "2:42", date: "2024-02-20" },
-      { name: "Thomas D.", time: "2:58", date: "2024-01-10" }
+      { name: "Marc L.", time: "2:18", date: "2024-03-15" },
+      { name: "Julie M.", time: "2:45", date: "2024-02-20" },
+      { name: "Thomas D.", time: "3:02", date: "2024-01-10" }
     ]
   },
   {
-    name: "Sprint Route de Bologne",
-    lat: 48.0380, lng: 5.4750,
-    distance: 0.85, elevation: 5, avgGrade: 0.6, maxGrade: 2.1,
+    name: "Sprint D14 vers Hundegelaut",
+    lat: 48.0435, lng: 5.4920,
+    distance: 0.85, elevation: 8, avgGrade: 0.9, maxGrade: 2.5,
     type: "sprint",
-    segment: [[48.0360, 5.4730], [48.0370, 5.4740], [48.0380, 5.4750], [48.0390, 5.4760]],
+    segment: [[48.0418, 5.4895], [48.0427, 5.4908], [48.0435, 5.4920], [48.0443, 5.4932]],
     records: [
-      { name: "Alex B.", time: "2:55", date: "2024-04-01" },
-      { name: "Sarah K.", time: "3:18", date: "2024-03-25" },
-      { name: "Pierre V.", time: "3:32", date: "2024-02-15" }
+      { name: "Alex B.", time: "2:52", date: "2024-04-01" },
+      { name: "Sarah K.", time: "3:15", date: "2024-03-25" },
+      { name: "Pierre V.", time: "3:28", date: "2024-02-15" }
     ]
   },
   {
-    name: "Côte Chemin des Vignes",
-    lat: 48.0470, lng: 5.4870,
-    distance: 0.95, elevation: 52, avgGrade: 5.5, maxGrade: 8.2,
+    name: "Côte Route Foyer Suzanne",
+    lat: 48.0490, lng: 5.4765,
+    distance: 0.92, elevation: 48, avgGrade: 5.2, maxGrade: 8.5,
     type: "climb",
-    segment: [[48.0445, 5.4850], [48.0458, 5.4860], [48.0470, 5.4870], [48.0480, 5.4880]],
+    segment: [[48.0465, 5.4745], [48.0478, 5.4755], [48.0490, 5.4765], [48.0500, 5.4775]],
     records: [
-      { name: "Laurent P.", time: "3:45", date: "2024-03-30" },
-      { name: "Emma R.", time: "4:22", date: "2024-02-28" },
-      { name: "Nicolas F.", time: "4:45", date: "2024-01-20" }
+      { name: "Laurent P.", time: "3:38", date: "2024-03-30" },
+      { name: "Emma R.", time: "4:15", date: "2024-02-28" },
+      { name: "Nicolas F.", time: "4:38", date: "2024-01-20" }
     ]
   },
   {
-    name: "Sprint Rue du Moulin",
-    lat: 48.0410, lng: 5.4780,
-    distance: 0.55, elevation: 3, avgGrade: 0.5, maxGrade: 1.8,
+    name: "Sprint D310 Sud",
+    lat: 48.0380, lng: 5.4795,
+    distance: 0.72, elevation: 5, avgGrade: 0.7, maxGrade: 2.0,
     type: "sprint",
-    segment: [[48.0400, 5.4765], [48.0405, 5.4773], [48.0410, 5.4780], [48.0415, 5.4787]],
+    segment: [[48.0365, 5.4780], [48.0373, 5.4788], [48.0380, 5.4795], [48.0388, 5.4803]],
     records: [
-      { name: "Romain C.", time: "1:52", date: "2024-04-12" },
-      { name: "Léa B.", time: "2:08", date: "2024-03-28" },
-      { name: "Hugo W.", time: "2:15", date: "2024-02-18" }
+      { name: "Romain C.", time: "2:25", date: "2024-04-12" },
+      { name: "Léa B.", time: "2:42", date: "2024-03-28" },
+      { name: "Hugo W.", time: "2:50", date: "2024-02-18" }
     ]
   },
   {
-    name: "Montée Bois Communal",
-    lat: 48.0500, lng: 5.4750,
-    distance: 0.78, elevation: 45, avgGrade: 5.8, maxGrade: 10.2,
+    name: "Montée Bois Nord",
+    lat: 48.0515, lng: 5.4795,
+    distance: 0.78, elevation: 45, avgGrade: 5.8, maxGrade: 10.5,
     type: "climb",
-    segment: [[48.0478, 5.4735], [48.0489, 5.4743], [48.0500, 5.4750], [48.0508, 5.4757]],
+    segment: [[48.0493, 5.4780], [48.0504, 5.4788], [48.0515, 5.4795], [48.0523, 5.4802]],
     records: [
-      { name: "Kevin S.", time: "2:38", date: "2024-04-10" },
-      { name: "Marie L.", time: "3:05", date: "2024-03-18" },
-      { name: "Antoine M.", time: "3:20", date: "2024-02-05" }
+      { name: "Kevin S.", time: "2:35", date: "2024-04-10" },
+      { name: "Marie L.", time: "3:02", date: "2024-03-18" },
+      { name: "Antoine M.", time: "3:18", date: "2024-02-05" }
     ]
   },
   {
-    name: "Descente Vallée",
-    lat: 48.0420, lng: 5.4690,
-    distance: 0.62, elevation: -28, avgGrade: -4.5, maxGrade: -8.0,
+    name: "Descente vers D14",
+    lat: 48.0410, lng: 5.4750,
+    distance: 0.58, elevation: -32, avgGrade: -5.5, maxGrade: -9.2,
     type: "descent",
-    segment: [[48.0435, 5.4705], [48.0428, 5.4698], [48.0420, 5.4690], [48.0412, 5.4682]],
+    segment: [[48.0425, 5.4765], [48.0418, 5.4758], [48.0410, 5.4750], [48.0402, 5.4742]],
     records: [
-      { name: "Julien H.", time: "1:35", date: "2024-04-05" },
-      { name: "Claire D.", time: "1:48", date: "2024-03-12" },
-      { name: "Maxime T.", time: "1:55", date: "2024-02-22" }
+      { name: "Julien H.", time: "1:28", date: "2024-04-05" },
+      { name: "Claire D.", time: "1:42", date: "2024-03-12" },
+      { name: "Maxime T.", time: "1:50", date: "2024-02-22" }
     ]
   },
   {
-    name: "Tour du Village",
+    name: "Tour Centre Village",
     lat: 48.0450, lng: 5.4820,
-    distance: 1.0, elevation: 12, avgGrade: 1.2, maxGrade: 3.5,
+    distance: 0.95, elevation: 15, avgGrade: 1.6, maxGrade: 4.2,
     type: "flat",
-    segment: [[48.0440, 5.4810], [48.0448, 5.4818], [48.0455, 5.4825], [48.0460, 5.4830], [48.0465, 5.4820]],
+    segment: [[48.0440, 5.4810], [48.0448, 5.4818], [48.0455, 5.4825], [48.0460, 5.4830], [48.0463, 5.4822]],
     records: [
-      { name: "David R.", time: "3:25", date: "2024-04-08" },
-      { name: "Sophie M.", time: "3:52", date: "2024-03-22" },
-      { name: "Lucas P.", time: "4:05", date: "2024-02-16" }
+      { name: "David R.", time: "3:18", date: "2024-04-08" },
+      { name: "Sophie M.", time: "3:45", date: "2024-03-22" },
+      { name: "Lucas P.", time: "3:58", date: "2024-02-16" }
     ]
   },
   {
-    name: "Sprint Route Départementale",
-    lat: 48.0395, lng: 5.4835,
-    distance: 0.72, elevation: 8, avgGrade: 1.1, maxGrade: 2.8,
+    name: "Sprint D310 vers La Mathe",
+    lat: 48.0450, lng: 5.4950,
+    distance: 0.88, elevation: 10, avgGrade: 1.1, maxGrade: 3.0,
     type: "sprint",
-    segment: [[48.0380, 5.4820], [48.0388, 5.4828], [48.0395, 5.4835], [48.0403, 5.4842]],
+    segment: [[48.0432, 5.4928], [48.0441, 5.4939], [48.0450, 5.4950], [48.0459, 5.4961]],
     records: [
-      { name: "Théo V.", time: "2:28", date: "2024-04-15" },
-      { name: "Camille L.", time: "2:45", date: "2024-03-30" },
-      { name: "Arthur B.", time: "2:52", date: "2024-02-25" }
+      { name: "Théo V.", time: "2:58", date: "2024-04-15" },
+      { name: "Camille L.", time: "3:22", date: "2024-03-30" },
+      { name: "Arthur B.", time: "3:35", date: "2024-02-25" }
     ]
   }
 ];

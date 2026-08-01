@@ -48,6 +48,7 @@
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
     }
 
     /* iOS Safe Area Support */
@@ -58,41 +59,103 @@
       padding-right: env(safe-area-inset-right);
     }
 
-    /* Mobile optimizations */
+    /* Mobile Menu Overlay */
+    .mobile-menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 999;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .mobile-menu-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Sidebar - Desktop */
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      height: 100vh;
+      width: 280px;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(148, 163, 184, 0.1);
+      z-index: 100;
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+    }
+
+    /* Mobile adjustments */
     @media (max-width: 768px) {
       .sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
         right: 0;
-        height: auto;
-        width: 100%;
-        flex-direction: row;
-        overflow-x: auto;
-        z-index: 50;
-        padding: 0.5rem;
-        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+        left: auto;
+        width: 280px;
+        transform: translateX(100%);
+        z-index: 1000;
       }
 
-      .sidebar-link {
-        flex-direction: column;
-        min-width: 60px;
-        padding: 0.5rem;
-        text-align: center;
-        font-size: 0.7rem;
-      }
-
-      .sidebar-link i {
-        margin: 0 0 0.25rem 0;
+      .sidebar.active {
+        transform: translateX(0);
       }
 
       main {
-        margin-left: 0;
-        padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+        margin-left: 0 !important;
+        padding-bottom: 1rem;
       }
 
       header {
         padding: 1rem;
+      }
+
+      /* Mobile header with hamburger */
+      .mobile-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        z-index: 90;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1rem;
+        padding-top: env(safe-area-inset-top);
+      }
+
+      .mobile-header h1 {
+        font-size: 1.25rem;
+        font-weight: bold;
+      }
+
+      .hamburger {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: background 0.2s;
+      }
+
+      .hamburger:active {
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      main {
+        padding-top: calc(60px + env(safe-area-inset-top));
       }
 
       .glass {
@@ -102,13 +165,32 @@
       .grid {
         gap: 0.75rem !important;
       }
+
+      /* Reduce text sizes */
+      h2 { font-size: 1.5rem !important; }
+      h3 { font-size: 1.25rem !important; }
+      .text-4xl { font-size: 2rem !important; }
+      .text-3xl { font-size: 1.75rem !important; }
+      .text-2xl { font-size: 1.5rem !important; }
+    }
+
+    /* Desktop - hide mobile elements */
+    @media (min-width: 769px) {
+      .mobile-header {
+        display: none;
+      }
+
+      .mobile-menu-overlay {
+        display: none;
+      }
     }
 
     /* Touch optimizations */
-    button, a, .card-hover {
+    button, a, .card-hover, .sidebar-link {
       -webkit-user-select: none;
       user-select: none;
       touch-action: manipulation;
+      min-height: 44px;
     }
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -285,8 +367,22 @@
 </head>
 <body class="bg-surface-950 text-white font-sans min-h-screen flex">
 
+  <!-- MOBILE HEADER (visible uniquement sur mobile) -->
+  <div class="mobile-header">
+    <div class="flex items-center gap-2">
+      <span class="text-xl">🏃</span>
+      <h1>Runner<span class="text-accent">DB</span></h1>
+    </div>
+    <div class="hamburger" onclick="toggleMobileMenu()">
+      <i data-lucide="menu" class="w-6 h-6"></i>
+    </div>
+  </div>
+
+  <!-- MOBILE MENU OVERLAY -->
+  <div class="mobile-menu-overlay" id="mobile-overlay" onclick="closeMobileMenu()"></div>
+
   <!-- SIDEBAR -->
-  <aside class="w-64 min-h-screen bg-surface-900 border-r border-white/5 flex flex-col fixed left-0 top-0 z-50">
+  <aside class="sidebar w-64 min-h-screen bg-surface-900 border-r border-white/5 flex flex-col fixed left-0 top-0 z-50" id="main-sidebar">
     <div class="p-6 pb-4">
       <div class="flex items-center gap-3">
         <span class="text-2xl">🏃</span>
@@ -426,6 +522,32 @@
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+  });
+
+  // ===== MOBILE MENU =====
+  function toggleMobileMenu() {
+    const sidebar = document.getElementById('main-sidebar');
+    const overlay = document.getElementById('mobile-overlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+  }
+
+  function closeMobileMenu() {
+    const sidebar = document.getElementById('main-sidebar');
+    const overlay = document.getElementById('mobile-overlay');
+    sidebar.classList.remove('active');
+    overlay.classList.remove('active');
+  }
+
+  // Fermer le menu quand on clique sur un lien (mobile)
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
+          closeMobileMenu();
+        }
+      });
+    });
   });
 </script>
 

@@ -57,13 +57,13 @@ def service_worker():
 
 @app.route('/icon-192.png')
 def icon_192():
-    # Pour l'instant, on redirige vers l'icône SVG
-    # Tu devras convertir le SVG en PNG ou utiliser un service comme cloudinary
-    return redirect('/icon.svg')
+    from flask import send_file
+    return send_file('icon-192.png', mimetype='image/png')
 
 @app.route('/icon-512.png')
 def icon_512():
-    return redirect('/icon.svg')
+    from flask import send_file
+    return send_file('icon-512.png', mimetype='image/png')
 
 @app.route('/icon.svg')
 def icon_svg():

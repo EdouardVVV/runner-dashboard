@@ -1,27 +1,28 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
+  <!-- Background dark -->
   <rect width="512" height="512" fill="#0f172a" rx="110"/>
 
-  <!-- Accent glow -->
-  <circle cx="256" cy="256" r="200" fill="url(#gradient)" opacity="0.2"/>
+  <!-- Strava logo (chevrons) en orange -->
+  <g transform="translate(256, 300)">
+    <!-- Grand chevron Strava -->
+    <path d="M-90 40 L0 -140 L90 40 L52 40 L0 -64 L-52 40 Z" fill="#FC4C02"/>
+    <!-- Petit chevron Strava (inversé, plus clair) -->
+    <path d="M22 40 L58 112 L94 40 L122 40 L58 168 L-6 40 Z" fill="#FDA580"/>
+  </g>
 
-  <!-- Runner icon -->
-  <path d="M256 100 L280 140 L320 160 L300 200 L280 240 L240 260 L200 240 L180 200 L200 160 L240 140 Z"
-        fill="#CCFF00" opacity="0.9"/>
-
-  <circle cx="256" cy="140" r="30" fill="#CCFF00"/>
-
-  <path d="M256 170 L280 220 L300 280" stroke="#CCFF00" stroke-width="20" stroke-linecap="round" fill="none"/>
-  <path d="M256 220 L220 260 L200 320" stroke="#CCFF00" stroke-width="20" stroke-linecap="round" fill="none"/>
-
-  <path d="M280 280 L300 340 L280 380" stroke="#00D4FF" stroke-width="18" stroke-linecap="round" fill="none"/>
-  <path d="M200 320 L180 360 L200 400" stroke="#00D4FF" stroke-width="18" stroke-linecap="round" fill="none"/>
-
-  <!-- Gradient definition -->
-  <defs>
-    <radialGradient id="gradient">
-      <stop offset="0%" style="stop-color:#CCFF00;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#00D4FF;stop-opacity:0" />
-    </radialGradient>
-  </defs>
+  <!-- Coureur au-dessus du logo -->
+  <g transform="translate(256, 130)" fill="#CCFF00">
+    <!-- Tête -->
+    <circle cx="14" cy="-52" r="17"/>
+    <!-- Torse penché avant -->
+    <path d="M8 -36 L-8 8 L4 12 L20 -32 Z"/>
+    <!-- Bras avant levé -->
+    <path d="M12 -28 L44 -14 L40 -4 L6 -18 Z"/>
+    <!-- Bras arrière -->
+    <path d="M2 -24 L-30 -34 L-27 -44 L6 -34 Z"/>
+    <!-- Jambe avant pliée (genou levé) -->
+    <path d="M-4 6 L30 22 L46 52 L36 58 L20 30 L-10 16 Z"/>
+    <!-- Jambe arrière tendue -->
+    <path d="M-6 8 L-38 34 L-58 28 L-54 18 L-38 24 L-14 2 Z"/>
+  </g>
 </svg>

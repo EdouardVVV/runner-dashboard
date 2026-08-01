@@ -480,6 +480,9 @@
       <div class="sidebar-link px-3 py-2 rounded-lg text-sm font-medium text-slate-400 flex items-center gap-3" onclick="showSection('goals')">
         <i data-lucide="flag" class="w-4 h-4"></i> Objectifs
       </div>
+      <div class="sidebar-link px-3 py-2 rounded-lg text-sm font-medium text-slate-400 flex items-center gap-3" onclick="showSection('kom')">
+        <i data-lucide="trophy" class="w-4 h-4"></i> KOM Proches
+      </div>
       <div class="sidebar-link px-3 py-2 rounded-lg text-sm font-medium text-slate-400 flex items-center gap-3" onclick="showSection('planner')">
         <i data-lucide="map-pin" class="w-4 h-4"></i> Planificateur
       </div>
@@ -551,6 +554,33 @@
       <div id="section-analytics" class="space-y-6 hidden"></div>
       <div id="section-training" class="space-y-6 hidden"></div>
       <div id="section-goals" class="space-y-6 hidden"></div>
+
+      <!-- SECTION: KOM PROCHES -->
+      <div id="section-kom" class="space-y-6 hidden">
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+            <i data-lucide="trophy" class="w-6 h-6 text-yellow-500"></i>
+            Les 3 KOM les plus proches
+          </h3>
+
+          <div id="nearby-kom-cards" class="space-y-4">
+            <!-- Cards générées par JS -->
+          </div>
+
+          <div class="mt-6 text-center">
+            <button onclick="showSection('planner')" class="bg-accent/10 hover:bg-accent/20 text-accent px-6 py-3 rounded-xl transition flex items-center justify-center gap-2 mx-auto font-medium">
+              <i data-lucide="map-pin" class="w-5 h-5"></i>
+              Planifier un parcours avec ces KOM
+            </button>
+          </div>
+        </div>
+
+        <!-- Carte miniature des KOM -->
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-lg font-bold mb-4">Localisation des KOM</h3>
+          <div id="kom-mini-map" class="w-full h-64 rounded-xl bg-surface-800 border border-white/10"></div>
+        </div>
+      </div>
 
       <!-- SECTION: PLANIFICATEUR DE TRACÉ -->
       <div id="section-planner" class="space-y-6 hidden">

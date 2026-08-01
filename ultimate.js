@@ -2125,6 +2125,7 @@ function showSection(name) {
     analytics: ['Analytics', 'Statistiques avancées'],
     training: ['Plan d\'entraînement', 'Programme personnalisé'],
     goals: ['Objectifs', 'Suivi de progression'],
+    kom: ['KOM Proches', 'Les 3 segments les plus proches'],
     planner: ['Planificateur', 'Créer un tracé']
   };
   const t = titles[name] || ['', ''];
@@ -2136,6 +2137,13 @@ function showSection(name) {
     setTimeout(() => {
       initMap();
       renderSavedRoutes();
+    }, 100);
+  }
+
+  // Init KOM section
+  if (name === 'kom') {
+    setTimeout(() => {
+      initKOMSection();
     }, 100);
   }
 }
@@ -2212,6 +2220,7 @@ document.addEventListener('DOMContentLoaded', init);
 
 // ===== PLANIFICATEUR DE TRACÉ =====
 let map = null;
+let komMiniMap = null;
 let routePoints = [];
 let routeControl = null;
 let markers = [];
@@ -2669,4 +2678,179 @@ function deleteRoute(id) {
   savedRoutes = savedRoutes.filter(r => r.id !== id);
   localStorage.setItem('savedRoutes', JSON.stringify(savedRoutes));
   renderSavedRoutes();
+}
+
+// ===== SECTION KOM PROCHES =====
+function initKOMSection() {
+  // Obtenir la position pour trouver les KOM proches
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const pos = [position.coords.latitude, position.coords.longitude];
+        displayNearestKOMs(pos);
+        initKOMMiniMap(pos);
+      },
+      (error) => {
+        console.log('Geolocation error:', error);
+        // Par défaut sur Bize
+        displayNearestKOMs([48.0450, 5.4820]);
+        initKOMMiniMap([48.0450, 5.4820]);
+      }
+    );
+  } else {
+    // Par défaut sur Bize
+    displayNearestKOMs([48.0450, 5.4820]);
+    initKOMMiniMap([48.0450, 5.4820]);
+  }
+}
+
+function displayNearestKOMs(userPos) {
+  // Calculer les distances et trier
+  const komsWithDistance = komDatabase.map(kom => {
+    const dist = L.latLng(userPos).distanceTo([kom.lat, kom.lng]) / 1000;
+    return { ...kom, distance: dist };
+  }).sort((a, b) => a.distance - b.distance);
+
+  // Prendre les 3 premiers
+  const nearest3 = komsWithDistance.slice(0, 3);
+
+  // Générer les cartes
+  const container = document.getElementById('nearby-kom-cards');
+  container.innerHTML = nearest3.map((kom, index) => {
+    const icon = kom.type === 'climb' ? '⛰️' : kom.type === 'sprint' ? '⚡' : kom.type === 'descent' ? '⬇️' : '🏁';
+    const typeLabel = kom.type === 'climb' ? 'Montée' : kom.type === 'sprint' ? 'Sprint' : kom.type === 'descent' ? 'Descente' : 'Parcours';
+    const medalColor = index === 0 ? 'from-yellow-500 to-yellow-600' : index === 1 ? 'from-gray-400 to-gray-500' : 'from-orange-600 to-orange-700';
+    const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+
+    return `
+      <div class="glass rounded-2xl p-6 border-2 border-yellow-500/30 hover:border-yellow-500/50 transition">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex items-center gap-3">
+            <div class="text-5xl">${icon}</div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h4 class="text-xl font-bold">${kom.name}</h4>
+                <span class="text-2xl">${rankEmoji}</span>
+              </div>
+              <p class="text-sm text-slate-400 mt-1">${typeLabel}</p>
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-2xl font-bold text-yellow-500">${kom.distance.toFixed(1)} km</div>
+            <div class="text-xs text-slate-400">de vous</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div class="bg-surface-800/50 rounded-lg p-3 text-center">
+            <div class="text-xs text-slate-400 mb-1">Distance</div>
+            <div class="text-lg font-bold text-accent">${kom.distance.toFixed(2)} km</div>
+          </div>
+          <div class="bg-surface-800/50 rounded-lg p-3 text-center">
+            <div class="text-xs text-slate-400 mb-1">Dénivelé</div>
+            <div class="text-lg font-bold text-accentBlue">${kom.elevation > 0 ? '+' : ''}${kom.elevation}m</div>
+          </div>
+          <div class="bg-surface-800/50 rounded-lg p-3 text-center">
+            <div class="text-xs text-slate-400 mb-1">Pente moy.</div>
+            <div class="text-lg font-bold text-accentPurple">${kom.avgGrade.toFixed(1)}%</div>
+          </div>
+          <div class="bg-surface-800/50 rounded-lg p-3 text-center">
+            <div class="text-xs text-slate-400 mb-1">Pente max</div>
+            <div class="text-lg font-bold text-accentOrange">${kom.maxGrade.toFixed(1)}%</div>
+          </div>
+        </div>
+
+        <div class="bg-surface-800/30 rounded-xl p-4 mb-4">
+          <div class="flex items-center gap-2 mb-3">
+            <i data-lucide="trophy" class="w-4 h-4 text-yellow-500"></i>
+            <span class="text-sm font-semibold">Meilleurs temps</span>
+          </div>
+          <div class="space-y-2">
+            ${kom.records.map((r, i) => `
+              <div class="flex items-center justify-between text-sm">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">${i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'}</span>
+                  <span class="font-medium">${r.name}</span>
+                </div>
+                <span class="font-bold text-${i === 0 ? 'yellow' : i === 1 ? 'gray' : 'orange'}-500">${r.time}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <button onclick="goToKOMOnMap(${kom.lat}, ${kom.lng})"
+                class="w-full bg-gradient-to-r ${medalColor} text-white px-4 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition hover:scale-105">
+          <i data-lucide="map-pin" class="w-5 h-5"></i>
+          Voir sur la carte
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  lucide.createIcons();
+}
+
+function initKOMMiniMap(userPos) {
+  if (komMiniMap) {
+    komMiniMap.remove();
+  }
+
+  komMiniMap = L.map('kom-mini-map').setView(userPos, 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
+  }).addTo(komMiniMap);
+
+  // Position utilisateur
+  L.marker(userPos, {
+    icon: L.icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+      iconSize: [25, 41],
+      iconAnchor: [12, 41]
+    })
+  }).addTo(komMiniMap).bindPopup('📍 Vous');
+
+  // Les 3 KOM les plus proches
+  const komsWithDistance = komDatabase.map(kom => {
+    const dist = L.latLng(userPos).distanceTo([kom.lat, kom.lng]) / 1000;
+    return { ...kom, distance: dist };
+  }).sort((a, b) => a.distance - b.distance).slice(0, 3);
+
+  komsWithDistance.forEach((kom, index) => {
+    const icon = kom.type === 'climb' ? '⛰️' : kom.type === 'sprint' ? '⚡' : kom.type === 'descent' ? '⬇️' : '🏁';
+    const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+
+    // Segment doré
+    L.polyline(kom.segment, {
+      color: '#FFD700',
+      weight: 5,
+      opacity: 0.9
+    }).addTo(komMiniMap);
+
+    // Marqueur
+    const centerIdx = Math.floor(kom.segment.length / 2);
+    L.marker(kom.segment[centerIdx], {
+      icon: L.divIcon({
+        html: `<div style="background: #FFD700; color: #000; font-size: 18px; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.3);">${icon}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      })
+    }).addTo(komMiniMap).bindPopup(`<b>${rankEmoji} ${kom.name}</b><br>${kom.distance.toFixed(1)} km`);
+  });
+
+  // Ajuster les bounds
+  const bounds = L.latLngBounds([userPos]);
+  komsWithDistance.forEach(kom => {
+    kom.segment.forEach(point => bounds.extend(point));
+  });
+  komMiniMap.fitBounds(bounds, { padding: [30, 30] });
+}
+
+function goToKOMOnMap(lat, lng) {
+  showSection('planner');
+  setTimeout(() => {
+    if (!map) initMap();
+    map.setView([lat, lng], 16);
+  }, 300);
 }

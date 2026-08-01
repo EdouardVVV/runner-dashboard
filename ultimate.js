@@ -2213,20 +2213,32 @@ document.addEventListener('DOMContentLoaded', init);
 // ===== PLANIFICATEUR DE TRACÉ =====
 let map = null;
 let routePoints = [];
-let routePolyline = null;
+let routeControl = null;
 let markers = [];
 let userLocation = null;
 let savedRoutes = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
+let routeMode = 'walk'; // walk ou bike
+let komMarkers = [];
+
+// KOM fictifs autour de Paris (tu peux les adapter à ta ville)
+const komDatabase = [
+  { name: "Montée Champs-Élysées", lat: 48.8698, lng: 2.3078, distance: 1.2, elevation: 45, type: "climb" },
+  { name: "Sprint Avenue Foch", lat: 48.8704, lng: 2.2820, distance: 0.8, elevation: 5, type: "sprint" },
+  { name: "Côte de Montmartre", lat: 48.8867, lng: 2.3431, distance: 0.6, elevation: 85, type: "climb" },
+  { name: "Descente Trocadéro", lat: 48.8620, lng: 2.2870, distance: 0.5, elevation: -30, type: "descent" },
+  { name: "Tour Bois de Boulogne", lat: 48.8625, lng: 2.2495, distance: 2.4, elevation: 20, type: "flat" },
+  { name: "Sprint Rue de Rivoli", lat: 48.8606, lng: 2.3376, distance: 1.0, elevation: 0, type: "sprint" },
+];
 
 function initMap() {
-  if (map) return; // Déjà initialisée
+  if (map) return;
 
   // Carte centrée sur Paris par défaut
   map = L.map('map').setView([48.8566, 2.3522], 13);
 
   // Tiles OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors',
+    attribution: '© OpenStreetMap',
     maxZoom: 19
   }).addTo(map);
 
@@ -2236,6 +2248,8 @@ function initMap() {
       (position) => {
         userLocation = [position.coords.latitude, position.coords.longitude];
         map.setView(userLocation, 15);
+
+        // Marqueur position
         L.marker(userLocation, {
           icon: L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -2243,6 +2257,9 @@ function initMap() {
             iconAnchor: [12, 41]
           })
         }).addTo(map).bindPopup('📍 Votre position');
+
+        // Afficher les KOM proches
+        displayNearbyKOMs(userLocation);
       },
       (error) => {
         console.log('Geolocation error:', error);
@@ -2250,109 +2267,81 @@ function initMap() {
     );
   }
 
-  // Clic pour ajouter des points
+  // Clic pour ajouter des waypoints au routing
   map.on('click', (e) => {
-    addRoutePoint(e.latlng);
-  });
-
-  // Double-clic pour terminer
-  map.on('dblclick', () => {
-    updatePlannerEstimates();
+    addRouteWaypoint(e.latlng);
   });
 }
 
-function addRoutePoint(latlng) {
+function setRouteMode(mode) {
+  routeMode = mode;
+  document.getElementById('btn-mode-walk').className = mode === 'walk'
+    ? 'flex-1 bg-accent/10 text-accent px-4 py-2 rounded-lg transition flex items-center justify-center gap-2 font-medium'
+    : 'flex-1 bg-white/5 text-slate-400 px-4 py-2 rounded-lg transition flex items-center justify-center gap-2';
+  document.getElementById('btn-mode-bike').className = mode === 'bike'
+    ? 'flex-1 bg-accent/10 text-accent px-4 py-2 rounded-lg transition flex items-center justify-center gap-2 font-medium'
+    : 'flex-1 bg-white/5 text-slate-400 px-4 py-2 rounded-lg transition flex items-center justify-center gap-2';
+
+  // Recréer le routage si des points existent
+  if (routePoints.length > 0) {
+    const savedPoints = [...routePoints];
+    clearRoute();
+    savedPoints.forEach(p => addRouteWaypoint(p));
+  }
+}
+
+function addRouteWaypoint(latlng) {
   routePoints.push(latlng);
 
-  // Marqueur
-  const marker = L.circleMarker(latlng, {
-    radius: 5,
-    color: '#CCFF00',
-    fillColor: '#CCFF00',
-    fillOpacity: 0.8
-  }).addTo(map);
-  markers.push(marker);
+  // Si on a au moins 2 points, créer/mettre à jour le routage
+  if (routePoints.length >= 2) {
+    if (routeControl) {
+      map.removeControl(routeControl);
+    }
 
-  // Mettre à jour la polyligne
-  if (routePolyline) {
-    map.removeLayer(routePolyline);
-  }
-
-  if (routePoints.length > 1) {
-    routePolyline = L.polyline(routePoints, {
-      color: '#CCFF00',
-      weight: 4,
-      opacity: 0.7
+    // Router avec OSRM (Open Source Routing Machine)
+    routeControl = L.Routing.control({
+      waypoints: routePoints,
+      routeWhileDragging: false,
+      addWaypoints: false,
+      draggableWaypoints: false,
+      router: L.Routing.osrmv1({
+        serviceUrl: `https://router.project-osrm.org/route/v1`,
+        profile: routeMode === 'walk' ? 'foot' : 'cycling'
+      }),
+      lineOptions: {
+        styles: [{ color: '#CCFF00', weight: 5, opacity: 0.8 }]
+      },
+      createMarker: (i, wp) => {
+        const isStart = i === 0;
+        const isEnd = i === routePoints.length - 1;
+        return L.marker(wp.latLng, {
+          icon: L.icon({
+            iconUrl: isStart
+              ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png'
+              : isEnd
+              ? 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png'
+              : 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41]
+          }),
+          draggable: false
+        });
+      },
+      show: false // Cacher les instructions textuelles
     }).addTo(map);
-  }
 
-  updatePlannerEstimates();
-}
-
-function clearRoute() {
-  routePoints = [];
-  markers.forEach(m => map.removeLayer(m));
-  markers = [];
-  if (routePolyline) {
-    map.removeLayer(routePolyline);
-    routePolyline = null;
-  }
-  updatePlannerEstimates();
-}
-
-function centerMapOnLocation() {
-  if (userLocation) {
-    map.setView(userLocation, 15);
-  } else {
-    alert('Position non disponible. Autorisez la géolocalisation.');
+    // Écouter les changements de route
+    routeControl.on('routesfound', (e) => {
+      const route = e.routes[0];
+      updatePlannerFromRoute(route);
+    });
   }
 }
 
-function calculateDistance(points) {
-  let totalDistance = 0;
-  for (let i = 1; i < points.length; i++) {
-    totalDistance += points[i-1].distanceTo(points[i]);
-  }
-  return totalDistance / 1000; // en km
-}
-
-async function calculateElevation(points) {
-  // Simulation du dénivelé (API d'élévation nécessiterait une clé)
-  // On simule environ 10-15m de dénivelé par km
-  const distance = calculateDistance(points);
-  return Math.round(distance * 12 + Math.random() * 20);
-}
-
-function parsePace(paceStr) {
-  if (!paceStr) return null;
-  const parts = paceStr.split(':');
-  if (parts.length !== 2) return null;
-  const min = parseInt(parts[0]);
-  const sec = parseInt(parts[1]);
-  return min * 60 + sec; // secondes par km
-}
-
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) {
-    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-  }
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-async function updatePlannerEstimates() {
-  if (routePoints.length < 2) {
-    document.getElementById('planner-distance').textContent = '0.00 km';
-    document.getElementById('planner-elevation').textContent = '0 m';
-    document.getElementById('planner-time-target').textContent = '--:--';
-    document.getElementById('planner-time-max').textContent = '--:--';
-    return;
-  }
-
-  const distance = calculateDistance(routePoints);
-  const elevation = await calculateElevation(routePoints);
+function updatePlannerFromRoute(route) {
+  const distance = route.summary.totalDistance / 1000; // en km
+  const elevation = Math.round(distance * 12 + Math.random() * 20); // Simulation
 
   document.getElementById('planner-distance').textContent = `${distance.toFixed(2)} km`;
   document.getElementById('planner-elevation').textContent = `${elevation} m`;
@@ -2376,6 +2365,116 @@ async function updatePlannerEstimates() {
   }
 }
 
+function clearRoute() {
+  routePoints = [];
+  if (routeControl) {
+    map.removeControl(routeControl);
+    routeControl = null;
+  }
+  document.getElementById('planner-distance').textContent = '0.00 km';
+  document.getElementById('planner-elevation').textContent = '0 m';
+  document.getElementById('planner-time-target').textContent = '--:--';
+  document.getElementById('planner-time-max').textContent = '--:--';
+}
+
+function centerMapOnLocation() {
+  if (userLocation) {
+    map.setView(userLocation, 15);
+  } else {
+    alert('Position non disponible. Autorisez la géolocalisation.');
+  }
+}
+
+function parsePace(paceStr) {
+  if (!paceStr) return null;
+  const parts = paceStr.split(':');
+  if (parts.length !== 2) return null;
+  const min = parseInt(parts[0]);
+  const sec = parseInt(parts[1]);
+  return min * 60 + sec;
+}
+
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function updatePlannerEstimates() {
+  // Déjà géré par l'événement routesfound
+}
+
+function displayNearbyKOMs(userPos) {
+  // Effacer les anciens KOM
+  komMarkers.forEach(m => map.removeLayer(m));
+  komMarkers = [];
+
+  // Filtrer les KOM à moins de 5km
+  const nearbyKOMs = komDatabase.filter(kom => {
+    const dist = L.latLng(userPos).distanceTo([kom.lat, kom.lng]) / 1000;
+    return dist < 5;
+  });
+
+  // Afficher sur la carte
+  nearbyKOMs.forEach(kom => {
+    const icon = kom.type === 'climb' ? '⛰️' : kom.type === 'sprint' ? '⚡' : '🏁';
+    const marker = L.marker([kom.lat, kom.lng], {
+      icon: L.divIcon({
+        html: `<div style="font-size: 24px;">${icon}</div>`,
+        className: 'kom-marker',
+        iconSize: [30, 30]
+      })
+    }).addTo(map).bindPopup(`
+      <b>${kom.name}</b><br>
+      ${kom.distance.toFixed(1)} km • ${kom.elevation > 0 ? '+' : ''}${kom.elevation}m<br>
+      <button onclick="addKOMToRoute(${kom.lat}, ${kom.lng})" class="text-accent text-sm">Ajouter au tracé</button>
+    `);
+    komMarkers.push(marker);
+  });
+
+  // Afficher la liste
+  renderKOMList(nearbyKOMs);
+}
+
+function renderKOMList(koms) {
+  const container = document.getElementById('kom-list');
+  if (!koms.length) {
+    container.innerHTML = '<p class="text-slate-400 text-sm">Aucun KOM à proximité</p>';
+    return;
+  }
+
+  container.innerHTML = koms.map(kom => {
+    const icon = kom.type === 'climb' ? '⛰️' : kom.type === 'sprint' ? '⚡' : '🏁';
+    const typeLabel = kom.type === 'climb' ? 'Montée' : kom.type === 'sprint' ? 'Sprint' : 'Plat';
+    return `
+      <div class="glass rounded-xl p-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="text-3xl">${icon}</div>
+          <div>
+            <h4 class="font-semibold">${kom.name}</h4>
+            <p class="text-xs text-slate-400 mt-1">
+              ${typeLabel} • ${kom.distance.toFixed(1)} km • ${kom.elevation > 0 ? '+' : ''}${kom.elevation}m
+            </p>
+          </div>
+        </div>
+        <button onclick="addKOMToRoute(${kom.lat}, ${kom.lng})" class="bg-accent/10 hover:bg-accent/20 text-accent px-3 py-2 rounded-lg text-sm transition">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  lucide.createIcons();
+}
+
+function addKOMToRoute(lat, lng) {
+  addRouteWaypoint(L.latLng(lat, lng));
+}
+
 function saveRoute() {
   if (routePoints.length < 2) {
     alert('Tracez un parcours avant de sauvegarder !');
@@ -2385,13 +2484,14 @@ function saveRoute() {
   const name = prompt('Nom du tracé :');
   if (!name) return;
 
-  const distance = calculateDistance(routePoints);
+  const distance = parseFloat(document.getElementById('planner-distance').textContent);
 
   savedRoutes.push({
     id: Date.now(),
     name: name,
     points: routePoints.map(p => [p.lat, p.lng]),
     distance: distance,
+    mode: routeMode,
     date: new Date().toISOString()
   });
 
@@ -2412,7 +2512,7 @@ function renderSavedRoutes() {
       <div>
         <h4 class="font-semibold">${route.name}</h4>
         <p class="text-xs text-slate-400 mt-1">
-          ${route.distance.toFixed(2)} km • ${new Date(route.date).toLocaleDateString('fr-FR')}
+          ${route.distance.toFixed(2)} km • ${route.mode === 'walk' ? '🏃' : '🚴'} • ${new Date(route.date).toLocaleDateString('fr-FR')}
         </p>
       </div>
       <div class="flex gap-2">
@@ -2433,15 +2533,13 @@ function loadRoute(id) {
   const route = savedRoutes.find(r => r.id === id);
   if (!route) return;
 
+  routeMode = route.mode || 'walk';
+  setRouteMode(routeMode);
+
   clearRoute();
   route.points.forEach(p => {
-    addRoutePoint(L.latLng(p[0], p[1]));
+    addRouteWaypoint(L.latLng(p[0], p[1]));
   });
-
-  // Centrer la carte sur le tracé
-  if (routePolyline) {
-    map.fitBounds(routePolyline.getBounds());
-  }
 }
 
 function deleteRoute(id) {

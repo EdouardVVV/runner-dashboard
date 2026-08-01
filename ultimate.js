@@ -2220,21 +2220,87 @@ let savedRoutes = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
 let routeMode = 'walk'; // walk ou bike
 let komMarkers = [];
 
-// KOM fictifs autour de Paris (tu peux les adapter à ta ville)
+// KOM autour de Bize (52500 - Haute-Marne)
 const komDatabase = [
-  { name: "Montée Champs-Élysées", lat: 48.8698, lng: 2.3078, distance: 1.2, elevation: 45, type: "climb" },
-  { name: "Sprint Avenue Foch", lat: 48.8704, lng: 2.2820, distance: 0.8, elevation: 5, type: "sprint" },
-  { name: "Côte de Montmartre", lat: 48.8867, lng: 2.3431, distance: 0.6, elevation: 85, type: "climb" },
-  { name: "Descente Trocadéro", lat: 48.8620, lng: 2.2870, distance: 0.5, elevation: -30, type: "descent" },
-  { name: "Tour Bois de Boulogne", lat: 48.8625, lng: 2.2495, distance: 2.4, elevation: 20, type: "flat" },
-  { name: "Sprint Rue de Rivoli", lat: 48.8606, lng: 2.3376, distance: 1.0, elevation: 0, type: "sprint" },
+  {
+    name: "Montée de Bize Village",
+    lat: 48.0450, lng: 5.4820,
+    distance: 0.8, elevation: 45, avgGrade: 5.6, maxGrade: 9,
+    type: "climb",
+    segment: [[48.0420, 5.4800], [48.0450, 5.4820], [48.0470, 5.4840]],
+    records: [
+      { name: "Marc L.", time: "2:45", date: "2024-03-15" },
+      { name: "Julie M.", time: "3:12", date: "2024-02-20" },
+      { name: "Thomas D.", time: "3:28", date: "2024-01-10" }
+    ]
+  },
+  {
+    name: "Sprint Route de Bologne",
+    lat: 48.0380, lng: 5.4750,
+    distance: 1.2, elevation: 8, avgGrade: 0.7, maxGrade: 2,
+    type: "sprint",
+    segment: [[48.0350, 5.4720], [48.0380, 5.4750], [48.0410, 5.4780]],
+    records: [
+      { name: "Alex B.", time: "4:05", date: "2024-04-01" },
+      { name: "Sarah K.", time: "4:38", date: "2024-03-25" },
+      { name: "Pierre V.", time: "4:52", date: "2024-02-15" }
+    ]
+  },
+  {
+    name: "Côte de Chauffourt",
+    lat: 48.0520, lng: 5.4900,
+    distance: 1.5, elevation: 65, avgGrade: 4.3, maxGrade: 8,
+    type: "climb",
+    segment: [[48.0480, 5.4850], [48.0500, 5.4875], [48.0520, 5.4900], [48.0540, 5.4920]],
+    records: [
+      { name: "Laurent P.", time: "6:15", date: "2024-03-30" },
+      { name: "Emma R.", time: "7:02", date: "2024-02-28" },
+      { name: "Nicolas F.", time: "7:35", date: "2024-01-20" }
+    ]
+  },
+  {
+    name: "Descente Moulin de Bize",
+    lat: 48.0400, lng: 5.4680,
+    distance: 0.9, elevation: -35, avgGrade: -3.9, maxGrade: -7,
+    type: "descent",
+    segment: [[48.0430, 5.4700], [48.0415, 5.4690], [48.0400, 5.4680]],
+    records: [
+      { name: "Kevin S.", time: "2:10", date: "2024-04-10" },
+      { name: "Marie L.", time: "2:28", date: "2024-03-18" },
+      { name: "Antoine M.", time: "2:35", date: "2024-02-05" }
+    ]
+  },
+  {
+    name: "Circuit Forêt de Bize",
+    lat: 48.0480, lng: 5.4650,
+    distance: 3.2, elevation: 25, avgGrade: 0.8, maxGrade: 5,
+    type: "flat",
+    segment: [[48.0450, 5.4600], [48.0460, 5.4625], [48.0480, 5.4650], [48.0490, 5.4680], [48.0485, 5.4700]],
+    records: [
+      { name: "Julien H.", time: "14:20", date: "2024-04-05" },
+      { name: "Claire D.", time: "16:45", date: "2024-03-12" },
+      { name: "Maxime T.", time: "17:10", date: "2024-02-22" }
+    ]
+  },
+  {
+    name: "Sprint Rue de l'Église",
+    lat: 48.0445, lng: 5.4810,
+    distance: 0.6, elevation: 5, avgGrade: 0.8, maxGrade: 3,
+    type: "sprint",
+    segment: [[48.0435, 5.4790], [48.0445, 5.4810], [48.0455, 5.4825]],
+    records: [
+      { name: "Romain C.", time: "2:05", date: "2024-04-12" },
+      { name: "Léa B.", time: "2:22", date: "2024-03-28" },
+      { name: "Hugo W.", time: "2:30", date: "2024-02-18" }
+    ]
+  }
 ];
 
 function initMap() {
   if (map) return;
 
-  // Carte centrée sur Paris par défaut
-  map = L.map('map').setView([48.8566, 2.3522], 13);
+  // Carte centrée sur Bize (52500)
+  map = L.map('map').setView([48.0450, 5.4820], 14);
 
   // Tiles OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -2263,8 +2329,13 @@ function initMap() {
       },
       (error) => {
         console.log('Geolocation error:', error);
+        // Si pas de géolocalisation, afficher tous les KOM de Bize
+        displayNearbyKOMs([48.0450, 5.4820]);
       }
     );
+  } else {
+    // Afficher tous les KOM de Bize par défaut
+    displayNearbyKOMs([48.0450, 5.4820]);
   }
 
   // Clic pour ajouter des waypoints au routing
@@ -2310,7 +2381,7 @@ function addRouteWaypoint(latlng) {
         profile: routeMode === 'walk' ? 'foot' : 'cycling'
       }),
       lineOptions: {
-        styles: [{ color: '#CCFF00', weight: 5, opacity: 0.8 }]
+        styles: [{ color: '#FC4C02', weight: 5, opacity: 0.8 }]
       },
       createMarker: (i, wp) => {
         const isStart = i === 0;
@@ -2381,7 +2452,8 @@ function centerMapOnLocation() {
   if (userLocation) {
     map.setView(userLocation, 15);
   } else {
-    alert('Position non disponible. Autorisez la géolocalisation.');
+    // Centrer sur Bize par défaut
+    map.setView([48.0450, 5.4820], 14);
   }
 }
 
@@ -2413,26 +2485,75 @@ function displayNearbyKOMs(userPos) {
   komMarkers.forEach(m => map.removeLayer(m));
   komMarkers = [];
 
-  // Filtrer les KOM à moins de 5km
+  // Filtrer les KOM à moins de 10km (région de Bize)
   const nearbyKOMs = komDatabase.filter(kom => {
     const dist = L.latLng(userPos).distanceTo([kom.lat, kom.lng]) / 1000;
-    return dist < 5;
+    return dist < 10;
   });
 
-  // Afficher sur la carte
+  // Afficher chaque KOM avec son segment en doré
   nearbyKOMs.forEach(kom => {
-    const icon = kom.type === 'climb' ? '⛰️' : kom.type === 'sprint' ? '⚡' : '🏁';
-    const marker = L.marker([kom.lat, kom.lng], {
+    // Tracer le segment du KOM en doré (style Strava)
+    const komLine = L.polyline(kom.segment, {
+      color: '#FFD700',
+      weight: 6,
+      opacity: 0.9,
+      className: 'kom-segment'
+    }).addTo(map);
+    komMarkers.push(komLine);
+
+    // Icône et type
+    const icon = kom.type === 'climb' ? '⛰️' : kom.type === 'sprint' ? '⚡' : kom.type === 'descent' ? '⬇️' : '🏁';
+    const typeLabel = kom.type === 'climb' ? 'Montée' : kom.type === 'sprint' ? 'Sprint' : kom.type === 'descent' ? 'Descente' : 'Parcours';
+
+    // Créer le popup détaillé style Strava
+    const popupContent = `
+      <div style="min-width: 250px; font-family: Inter, sans-serif;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+          <span style="font-size: 24px;">${icon}</span>
+          <div>
+            <div style="font-weight: bold; font-size: 16px;">${kom.name}</div>
+            <div style="font-size: 11px; color: #94a3b8;">${typeLabel}</div>
+          </div>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.1); padding: 8px; border-radius: 8px; margin-bottom: 8px;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+            <div><b>Distance:</b> ${kom.distance.toFixed(2)} km</div>
+            <div><b>Dénivelé:</b> ${kom.elevation > 0 ? '+' : ''}${kom.elevation}m</div>
+            <div><b>Pente moy:</b> ${kom.avgGrade.toFixed(1)}%</div>
+            <div><b>Pente max:</b> ${kom.maxGrade.toFixed(1)}%</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 8px;">
+          <div style="font-weight: bold; font-size: 13px; margin-bottom: 4px;">🏆 Meilleurs temps</div>
+          ${kom.records.map((r, i) => `
+            <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid rgba(0,0,0,0.05);">
+              <span>${i + 1}. ${r.name}</span>
+              <span style="font-weight: bold; color: ${i === 0 ? '#FFD700' : i === 1 ? '#C0C0C0' : '#CD7F32'};">${r.time}</span>
+            </div>
+          `).join('')}
+        </div>
+
+        <button onclick="addKOMToRoute(${kom.lat}, ${kom.lng})"
+                style="width: 100%; background: #CCFF00; color: #000; padding: 8px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px;">
+          ➕ Ajouter au tracé
+        </button>
+      </div>
+    `;
+
+    // Marqueur au centre du KOM (icône dorée)
+    const centerIdx = Math.floor(kom.segment.length / 2);
+    const marker = L.marker(kom.segment[centerIdx], {
       icon: L.divIcon({
-        html: `<div style="font-size: 24px;">${icon}</div>`,
-        className: 'kom-marker',
-        iconSize: [30, 30]
+        html: `<div style="background: #FFD700; color: #000; font-size: 20px; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.3);">${icon}</div>`,
+        className: '',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
       })
-    }).addTo(map).bindPopup(`
-      <b>${kom.name}</b><br>
-      ${kom.distance.toFixed(1)} km • ${kom.elevation > 0 ? '+' : ''}${kom.elevation}m<br>
-      <button onclick="addKOMToRoute(${kom.lat}, ${kom.lng})" class="text-accent text-sm">Ajouter au tracé</button>
-    `);
+    }).addTo(map).bindPopup(popupContent, { maxWidth: 300 });
+
     komMarkers.push(marker);
   });
 
@@ -2448,20 +2569,21 @@ function renderKOMList(koms) {
   }
 
   container.innerHTML = koms.map(kom => {
-    const icon = kom.type === 'climb' ? '⛰️' : kom.type === 'sprint' ? '⚡' : '🏁';
-    const typeLabel = kom.type === 'climb' ? 'Montée' : kom.type === 'sprint' ? 'Sprint' : 'Plat';
+    const icon = kom.type === 'climb' ? '⛰️' : kom.type === 'sprint' ? '⚡' : kom.type === 'descent' ? '⬇️' : '🏁';
+    const typeLabel = kom.type === 'climb' ? 'Montée' : kom.type === 'sprint' ? 'Sprint' : kom.type === 'descent' ? 'Descente' : 'Parcours';
     return `
-      <div class="glass rounded-xl p-4 flex items-center justify-between">
+      <div class="glass rounded-xl p-4 flex items-center justify-between border border-yellow-500/20">
         <div class="flex items-center gap-3">
           <div class="text-3xl">${icon}</div>
           <div>
             <h4 class="font-semibold">${kom.name}</h4>
             <p class="text-xs text-slate-400 mt-1">
-              ${typeLabel} • ${kom.distance.toFixed(1)} km • ${kom.elevation > 0 ? '+' : ''}${kom.elevation}m
+              ${typeLabel} • ${kom.distance.toFixed(1)} km • ${kom.elevation > 0 ? '+' : ''}${kom.elevation}m • ${kom.avgGrade.toFixed(1)}%
             </p>
+            <p class="text-xs text-yellow-500 mt-1">🏆 Record: ${kom.records[0].name} - ${kom.records[0].time}</p>
           </div>
         </div>
-        <button onclick="addKOMToRoute(${kom.lat}, ${kom.lng})" class="bg-accent/10 hover:bg-accent/20 text-accent px-3 py-2 rounded-lg text-sm transition">
+        <button onclick="addKOMToRoute(${kom.lat}, ${kom.lng})" class="bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 px-3 py-2 rounded-lg text-sm transition">
           <i data-lucide="plus" class="w-4 h-4"></i>
         </button>
       </div>

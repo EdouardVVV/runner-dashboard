@@ -12,6 +12,9 @@
   <!-- PWA Manifest -->
   <link rel="manifest" href="/manifest.json">
 
+  <!-- Leaflet CSS for maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
   <!-- Apple Touch Icons -->
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/icon-192.png">
@@ -22,6 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
@@ -474,6 +478,9 @@
       <div class="sidebar-link px-3 py-2 rounded-lg text-sm font-medium text-slate-400 flex items-center gap-3" onclick="showSection('goals')">
         <i data-lucide="flag" class="w-4 h-4"></i> Objectifs
       </div>
+      <div class="sidebar-link px-3 py-2 rounded-lg text-sm font-medium text-slate-400 flex items-center gap-3" onclick="showSection('planner')">
+        <i data-lucide="map-pin" class="w-4 h-4"></i> Planificateur
+      </div>
     </nav>
     <div class="p-4 border-t border-white/5" id="sidebar-profile">
       <div class="flex items-center gap-3">
@@ -542,6 +549,81 @@
       <div id="section-analytics" class="space-y-6 hidden"></div>
       <div id="section-training" class="space-y-6 hidden"></div>
       <div id="section-goals" class="space-y-6 hidden"></div>
+
+      <!-- SECTION: PLANIFICATEUR DE TRACÉ -->
+      <div id="section-planner" class="space-y-6 hidden">
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-5 h-5 text-accent"></i>
+            Planificateur de Tracé
+          </h3>
+
+          <!-- Carte interactive -->
+          <div class="mb-6">
+            <div id="map" class="w-full h-96 rounded-xl bg-surface-800 relative overflow-hidden border border-white/10"></div>
+            <p class="text-xs text-slate-400 mt-2">
+              📍 Clique sur la carte pour tracer ton parcours • Double-clic pour terminer
+            </p>
+          </div>
+
+          <!-- Contrôles -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label class="text-sm text-slate-400 mb-2 block">Pace cible (min/km)</label>
+              <input type="text" id="target-pace" placeholder="5:30"
+                     class="w-full bg-surface-800 border border-white/10 rounded-lg px-4 py-2 focus:border-accent focus:outline-none"
+                     oninput="updatePlannerEstimates()">
+            </div>
+            <div>
+              <label class="text-sm text-slate-400 mb-2 block">Distance estimée</label>
+              <div class="bg-surface-800 border border-white/10 rounded-lg px-4 py-2 font-mono text-accent" id="planner-distance">
+                0.00 km
+              </div>
+            </div>
+            <div>
+              <label class="text-sm text-slate-400 mb-2 block">Dénivelé positif</label>
+              <div class="bg-surface-800 border border-white/10 rounded-lg px-4 py-2 font-mono text-accentBlue" id="planner-elevation">
+                0 m
+              </div>
+            </div>
+          </div>
+
+          <!-- Estimations -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="glass rounded-xl p-4 border border-accent/20">
+              <div class="text-xs text-accent mb-1 uppercase tracking-wider">Temps estimé (pace cible)</div>
+              <div class="text-3xl font-bold text-accent" id="planner-time-target">--:--</div>
+            </div>
+            <div class="glass rounded-xl p-4 border border-accentOrange/20">
+              <div class="text-xs text-accentOrange mb-1 uppercase tracking-wider">Temps maximum</div>
+              <div class="text-3xl font-bold text-accentOrange" id="planner-time-max">--:--</div>
+              <p class="text-xs text-slate-400 mt-1">Basé sur ton meilleur pace actuel</p>
+            </div>
+          </div>
+
+          <!-- Boutons -->
+          <div class="flex gap-3">
+            <button onclick="clearRoute()" class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              Effacer
+            </button>
+            <button onclick="centerMapOnLocation()" class="flex-1 bg-accent/10 hover:bg-accent/20 text-accent px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+              <i data-lucide="locate-fixed" class="w-4 h-4"></i>
+              Ma position
+            </button>
+            <button onclick="saveRoute()" class="flex-1 bg-accentBlue/10 hover:bg-accentBlue/20 text-accentBlue px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              Sauvegarder
+            </button>
+          </div>
+        </div>
+
+        <!-- Routes sauvegardées -->
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-lg font-bold mb-4">Mes tracés sauvegardés</h3>
+          <div id="saved-routes" class="space-y-3"></div>
+        </div>
+      </div>
 
       <!-- LOADING -->
       <div id="section-loading" class="hidden flex flex-col items-center justify-center min-h-[50vh]">

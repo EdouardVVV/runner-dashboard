@@ -2091,7 +2091,8 @@ const sectionRenderers = {
   predictions: renderPredictions,
   analytics: renderAnalytics,
   training: renderTrainingPlan,
-  goals: renderGoals
+  goals: renderGoals,
+  planner: () => {} // Rendered via initMap
 };
 
 const renderedSections = new Set(['dashboard']); // Dashboard déjà rendu
@@ -2123,11 +2124,20 @@ function showSection(name) {
     predictions: ['Prédictions', 'Temps estimés'],
     analytics: ['Analytics', 'Statistiques avancées'],
     training: ['Plan d\'entraînement', 'Programme personnalisé'],
-    goals: ['Objectifs', 'Suivi de progression']
+    goals: ['Objectifs', 'Suivi de progression'],
+    planner: ['Planificateur', 'Créer un tracé']
   };
   const t = titles[name] || ['', ''];
   document.getElementById('page-title').textContent = t[0];
   document.getElementById('page-subtitle').textContent = t[1];
+
+  // Init map si section planner
+  if (name === 'planner') {
+    setTimeout(() => {
+      initMap();
+      renderSavedRoutes();
+    }, 100);
+  }
 }
 
 // ===== FILTERS & ACTIONS =====
@@ -2199,3 +2209,244 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ===== PLANIFICATEUR DE TRACÉ =====
+let map = null;
+let routePoints = [];
+let routePolyline = null;
+let markers = [];
+let userLocation = null;
+let savedRoutes = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
+
+function initMap() {
+  if (map) return; // Déjà initialisée
+
+  // Carte centrée sur Paris par défaut
+  map = L.map('map').setView([48.8566, 2.3522], 13);
+
+  // Tiles OpenStreetMap
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Demander la position
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        userLocation = [position.coords.latitude, position.coords.longitude];
+        map.setView(userLocation, 15);
+        L.marker(userLocation, {
+          icon: L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41]
+          })
+        }).addTo(map).bindPopup('📍 Votre position');
+      },
+      (error) => {
+        console.log('Geolocation error:', error);
+      }
+    );
+  }
+
+  // Clic pour ajouter des points
+  map.on('click', (e) => {
+    addRoutePoint(e.latlng);
+  });
+
+  // Double-clic pour terminer
+  map.on('dblclick', () => {
+    updatePlannerEstimates();
+  });
+}
+
+function addRoutePoint(latlng) {
+  routePoints.push(latlng);
+
+  // Marqueur
+  const marker = L.circleMarker(latlng, {
+    radius: 5,
+    color: '#CCFF00',
+    fillColor: '#CCFF00',
+    fillOpacity: 0.8
+  }).addTo(map);
+  markers.push(marker);
+
+  // Mettre à jour la polyligne
+  if (routePolyline) {
+    map.removeLayer(routePolyline);
+  }
+
+  if (routePoints.length > 1) {
+    routePolyline = L.polyline(routePoints, {
+      color: '#CCFF00',
+      weight: 4,
+      opacity: 0.7
+    }).addTo(map);
+  }
+
+  updatePlannerEstimates();
+}
+
+function clearRoute() {
+  routePoints = [];
+  markers.forEach(m => map.removeLayer(m));
+  markers = [];
+  if (routePolyline) {
+    map.removeLayer(routePolyline);
+    routePolyline = null;
+  }
+  updatePlannerEstimates();
+}
+
+function centerMapOnLocation() {
+  if (userLocation) {
+    map.setView(userLocation, 15);
+  } else {
+    alert('Position non disponible. Autorisez la géolocalisation.');
+  }
+}
+
+function calculateDistance(points) {
+  let totalDistance = 0;
+  for (let i = 1; i < points.length; i++) {
+    totalDistance += points[i-1].distanceTo(points[i]);
+  }
+  return totalDistance / 1000; // en km
+}
+
+async function calculateElevation(points) {
+  // Simulation du dénivelé (API d'élévation nécessiterait une clé)
+  // On simule environ 10-15m de dénivelé par km
+  const distance = calculateDistance(points);
+  return Math.round(distance * 12 + Math.random() * 20);
+}
+
+function parsePace(paceStr) {
+  if (!paceStr) return null;
+  const parts = paceStr.split(':');
+  if (parts.length !== 2) return null;
+  const min = parseInt(parts[0]);
+  const sec = parseInt(parts[1]);
+  return min * 60 + sec; // secondes par km
+}
+
+function formatTime(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+async function updatePlannerEstimates() {
+  if (routePoints.length < 2) {
+    document.getElementById('planner-distance').textContent = '0.00 km';
+    document.getElementById('planner-elevation').textContent = '0 m';
+    document.getElementById('planner-time-target').textContent = '--:--';
+    document.getElementById('planner-time-max').textContent = '--:--';
+    return;
+  }
+
+  const distance = calculateDistance(routePoints);
+  const elevation = await calculateElevation(routePoints);
+
+  document.getElementById('planner-distance').textContent = `${distance.toFixed(2)} km`;
+  document.getElementById('planner-elevation').textContent = `${elevation} m`;
+
+  // Temps avec pace cible
+  const targetPaceStr = document.getElementById('target-pace').value;
+  const targetPaceSec = parsePace(targetPaceStr);
+  if (targetPaceSec) {
+    const timeTarget = distance * targetPaceSec;
+    document.getElementById('planner-time-target').textContent = formatTime(timeTarget);
+  } else {
+    document.getElementById('planner-time-target').textContent = '--:--';
+  }
+
+  // Temps maximum (meilleur pace)
+  if (allRuns.length > 0) {
+    const paces = allRuns.filter(r => r.paceSecPerKm).map(r => r.paceSecPerKm);
+    const bestPace = Math.min(...paces);
+    const timeMax = distance * bestPace;
+    document.getElementById('planner-time-max').textContent = formatTime(timeMax);
+  }
+}
+
+function saveRoute() {
+  if (routePoints.length < 2) {
+    alert('Tracez un parcours avant de sauvegarder !');
+    return;
+  }
+
+  const name = prompt('Nom du tracé :');
+  if (!name) return;
+
+  const distance = calculateDistance(routePoints);
+
+  savedRoutes.push({
+    id: Date.now(),
+    name: name,
+    points: routePoints.map(p => [p.lat, p.lng]),
+    distance: distance,
+    date: new Date().toISOString()
+  });
+
+  localStorage.setItem('savedRoutes', JSON.stringify(savedRoutes));
+  renderSavedRoutes();
+  alert('✅ Tracé sauvegardé !');
+}
+
+function renderSavedRoutes() {
+  const container = document.getElementById('saved-routes');
+  if (!savedRoutes.length) {
+    container.innerHTML = '<p class="text-slate-400 text-sm">Aucun tracé sauvegardé</p>';
+    return;
+  }
+
+  container.innerHTML = savedRoutes.map(route => `
+    <div class="glass rounded-xl p-4 flex items-center justify-between">
+      <div>
+        <h4 class="font-semibold">${route.name}</h4>
+        <p class="text-xs text-slate-400 mt-1">
+          ${route.distance.toFixed(2)} km • ${new Date(route.date).toLocaleDateString('fr-FR')}
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="loadRoute(${route.id})" class="bg-accent/10 hover:bg-accent/20 text-accent px-3 py-2 rounded-lg text-sm transition">
+          <i data-lucide="map" class="w-4 h-4"></i>
+        </button>
+        <button onclick="deleteRoute(${route.id})" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-2 rounded-lg text-sm transition">
+          <i data-lucide="trash-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+  `).join('');
+
+  lucide.createIcons();
+}
+
+function loadRoute(id) {
+  const route = savedRoutes.find(r => r.id === id);
+  if (!route) return;
+
+  clearRoute();
+  route.points.forEach(p => {
+    addRoutePoint(L.latLng(p[0], p[1]));
+  });
+
+  // Centrer la carte sur le tracé
+  if (routePolyline) {
+    map.fitBounds(routePolyline.getBounds());
+  }
+}
+
+function deleteRoute(id) {
+  if (!confirm('Supprimer ce tracé ?')) return;
+  savedRoutes = savedRoutes.filter(r => r.id !== id);
+  localStorage.setItem('savedRoutes', JSON.stringify(savedRoutes));
+  renderSavedRoutes();
+}

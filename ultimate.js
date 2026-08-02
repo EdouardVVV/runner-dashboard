@@ -2229,50 +2229,50 @@ let savedRoutes = JSON.parse(localStorage.getItem('savedRoutes') || '[]');
 let routeMode = 'walk'; // walk ou bike
 let komMarkers = [];
 
-// KOM autour de Bize (52500) - Rayon 3km max du centre village
+// KOM autour de Bize (52500 - Haute-Marne) - Vraies coordonnées : 48.0667, 5.6167
 const komDatabase = [
   {
-    name: "Montée Centre Bize",
-    lat: 48.0445, lng: 5.4818,
-    distance: 0.62, elevation: 38, avgGrade: 6.1, maxGrade: 9.5,
+    name: "Montée Rue des Chenevières",
+    lat: 48.0667, lng: 5.6167,
+    distance: 0.58, elevation: 35, avgGrade: 6.0, maxGrade: 9.2,
     type: "climb",
-    segment: [[48.0432, 5.4805], [48.0439, 5.4812], [48.0445, 5.4818], [48.0450, 5.4823]],
+    segment: [[48.0655, 5.6155], [48.0661, 5.6161], [48.0667, 5.6167], [48.0673, 5.6173]],
     records: [
-      { name: "Marc L.", time: "2:12", date: "2024-03-15" },
-      { name: "Julie M.", time: "2:38", date: "2024-02-20" },
-      { name: "Thomas D.", time: "2:55", date: "2024-01-10" }
+      { name: "Marc L.", time: "2:05", date: "2024-03-15" },
+      { name: "Julie M.", time: "2:32", date: "2024-02-20" },
+      { name: "Thomas D.", time: "2:48", date: "2024-01-10" }
     ]
   },
   {
-    name: "Sprint Sortie Nord",
-    lat: 48.0470, lng: 5.4825,
-    distance: 0.75, elevation: 8, avgGrade: 1.1, maxGrade: 2.8,
+    name: "Sprint Sortie Est",
+    lat: 48.0670, lng: 5.6200,
+    distance: 0.72, elevation: 8, avgGrade: 1.1, maxGrade: 2.8,
     type: "sprint",
-    segment: [[48.0455, 5.4815], [48.0463, 5.4820], [48.0470, 5.4825], [48.0477, 5.4830]],
+    segment: [[48.0665, 5.6180], [48.0668, 5.6190], [48.0670, 5.6200], [48.0673, 5.6210]],
     records: [
-      { name: "Alex B.", time: "2:32", date: "2024-04-01" },
-      { name: "Sarah K.", time: "2:55", date: "2024-03-25" },
-      { name: "Pierre V.", time: "3:08", date: "2024-02-15" }
+      { name: "Alex B.", time: "2:28", date: "2024-04-01" },
+      { name: "Sarah K.", time: "2:48", date: "2024-03-25" },
+      { name: "Pierre V.", time: "3:02", date: "2024-02-15" }
     ]
   },
   {
-    name: "Côte Est Village",
-    lat: 48.0450, lng: 5.4860,
-    distance: 0.88, elevation: 45, avgGrade: 5.1, maxGrade: 8.0,
+    name: "Côte Nord Village",
+    lat: 48.0700, lng: 5.6170,
+    distance: 0.85, elevation: 48, avgGrade: 5.6, maxGrade: 8.5,
     type: "climb",
-    segment: [[48.0438, 5.4835], [48.0444, 5.4848], [48.0450, 5.4860], [48.0456, 5.4870]],
+    segment: [[48.0680, 5.6165], [48.0690, 5.6168], [48.0700, 5.6170], [48.0708, 5.6172]],
     records: [
-      { name: "Laurent P.", time: "3:25", date: "2024-03-30" },
-      { name: "Emma R.", time: "3:58", date: "2024-02-28" },
-      { name: "Nicolas F.", time: "4:18", date: "2024-01-20" }
+      { name: "Laurent P.", time: "3:18", date: "2024-03-30" },
+      { name: "Emma R.", time: "3:52", date: "2024-02-28" },
+      { name: "Nicolas F.", time: "4:12", date: "2024-01-20" }
     ]
   },
   {
     name: "Sprint Route Ouest",
-    lat: 48.0442, lng: 5.4780,
+    lat: 48.0665, lng: 5.6130,
     distance: 0.68, elevation: 5, avgGrade: 0.7, maxGrade: 2.2,
     type: "sprint",
-    segment: [[48.0430, 5.4765], [48.0436, 5.4773], [48.0442, 5.4780], [48.0448, 5.4788]],
+    segment: [[48.0660, 5.6110], [48.0663, 5.6120], [48.0665, 5.6130], [48.0668, 5.6140]],
     records: [
       { name: "Romain C.", time: "2:18", date: "2024-04-12" },
       { name: "Léa B.", time: "2:35", date: "2024-03-28" },
@@ -2281,46 +2281,46 @@ const komDatabase = [
   },
   {
     name: "Montée Bois Sud",
-    lat: 48.0420, lng: 5.4825,
-    distance: 0.72, elevation: 42, avgGrade: 5.8, maxGrade: 9.8,
+    lat: 48.0640, lng: 5.6160,
+    distance: 0.75, elevation: 42, avgGrade: 5.6, maxGrade: 9.5,
     type: "climb",
-    segment: [[48.0405, 5.4810], [48.0413, 5.4818], [48.0420, 5.4825], [48.0427, 5.4832]],
+    segment: [[48.0625, 5.6150], [48.0633, 5.6155], [48.0640, 5.6160], [48.0647, 5.6165]],
     records: [
-      { name: "Kevin S.", time: "2:28", date: "2024-04-10" },
-      { name: "Marie L.", time: "2:52", date: "2024-03-18" },
-      { name: "Antoine M.", time: "3:10", date: "2024-02-05" }
+      { name: "Kevin S.", time: "2:32", date: "2024-04-10" },
+      { name: "Marie L.", time: "2:55", date: "2024-03-18" },
+      { name: "Antoine M.", time: "3:12", date: "2024-02-05" }
     ]
   },
   {
     name: "Descente Sud-Ouest",
-    lat: 48.0415, lng: 5.4795,
-    distance: 0.58, elevation: -28, avgGrade: -4.8, maxGrade: -8.5,
+    lat: 48.0650, lng: 5.6145,
+    distance: 0.60, elevation: -30, avgGrade: -5.0, maxGrade: -8.8,
     type: "descent",
-    segment: [[48.0428, 5.4808], [48.0422, 5.4802], [48.0415, 5.4795], [48.0408, 5.4788]],
+    segment: [[48.0663, 5.6155], [48.0657, 5.6150], [48.0650, 5.6145], [48.0643, 5.6140]],
     records: [
-      { name: "Julien H.", time: "1:32", date: "2024-04-05" },
-      { name: "Claire D.", time: "1:45", date: "2024-03-12" },
-      { name: "Maxime T.", time: "1:52", date: "2024-02-22" }
+      { name: "Julien H.", time: "1:28", date: "2024-04-05" },
+      { name: "Claire D.", time: "1:42", date: "2024-03-12" },
+      { name: "Maxime T.", time: "1:50", date: "2024-02-22" }
     ]
   },
   {
-    name: "Tour Village Complet",
-    lat: 48.0445, lng: 5.4820,
-    distance: 0.95, elevation: 18, avgGrade: 1.9, maxGrade: 4.5,
+    name: "Tour du Village",
+    lat: 48.0667, lng: 5.6167,
+    distance: 0.92, elevation: 18, avgGrade: 2.0, maxGrade: 4.5,
     type: "flat",
-    segment: [[48.0438, 5.4810], [48.0445, 5.4818], [48.0452, 5.4825], [48.0455, 5.4830], [48.0450, 5.4822]],
+    segment: [[48.0660, 5.6160], [48.0665, 5.6165], [48.0670, 5.6170], [48.0673, 5.6168], [48.0668, 5.6163]],
     records: [
-      { name: "David R.", time: "3:15", date: "2024-04-08" },
-      { name: "Sophie M.", time: "3:42", date: "2024-03-22" },
-      { name: "Lucas P.", time: "3:55", date: "2024-02-16" }
+      { name: "David R.", time: "3:12", date: "2024-04-08" },
+      { name: "Sophie M.", time: "3:38", date: "2024-03-22" },
+      { name: "Lucas P.", time: "3:52", date: "2024-02-16" }
     ]
   },
   {
-    name: "Sprint Traverse Village",
-    lat: 48.0448, lng: 5.4835,
+    name: "Sprint Centre-Est",
+    lat: 48.0668, lng: 5.6185,
     distance: 0.65, elevation: 6, avgGrade: 0.9, maxGrade: 2.5,
     type: "sprint",
-    segment: [[48.0437, 5.4822], [48.0443, 5.4829], [48.0448, 5.4835], [48.0454, 5.4842]],
+    segment: [[48.0663, 5.6170], [48.0666, 5.6178], [48.0668, 5.6185], [48.0671, 5.6193]],
     records: [
       { name: "Théo V.", time: "2:12", date: "2024-04-15" },
       { name: "Camille L.", time: "2:28", date: "2024-03-30" },
@@ -2332,8 +2332,8 @@ const komDatabase = [
 function initMap() {
   if (map) return;
 
-  // Carte centrée sur Bize (52500)
-  map = L.map('map').setView([48.0450, 5.4820], 14);
+  // Carte centrée sur Bize (52500) - Vraies coordonnées
+  map = L.map('map').setView([48.0667, 5.6167], 14);
 
   // Tiles OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -2362,13 +2362,13 @@ function initMap() {
       },
       (error) => {
         console.log('Geolocation error:', error);
-        // Si pas de géolocalisation, afficher tous les KOM de Bize
-        displayNearbyKOMs([48.0450, 5.4820]);
+        // Par défaut sur Bize avec les vraies coordonnées
+        displayNearbyKOMs([48.0667, 5.6167]);
       }
     );
   } else {
-    // Afficher tous les KOM de Bize par défaut
-    displayNearbyKOMs([48.0450, 5.4820]);
+    // Par défaut sur Bize avec les vraies coordonnées
+    displayNearbyKOMs([48.0667, 5.6167]);
   }
 
   // Clic pour ajouter des waypoints au routing
@@ -2735,16 +2735,16 @@ function displayNearestKOMs(userPos) {
     return { ...kom, distance: dist };
   }).sort((a, b) => a.distance - b.distance);
 
-  // Prendre les 3 premiers
-  const nearest3 = komsWithDistance.slice(0, 3);
+  // Prendre TOUS les KOM (plus seulement les 3 premiers)
+  const nearestKOMs = komsWithDistance;
 
   // Générer les cartes
   const container = document.getElementById('nearby-kom-cards');
-  container.innerHTML = nearest3.map((kom, index) => {
+  container.innerHTML = nearestKOMs.map((kom, index) => {
     const icon = kom.type === 'climb' ? '⛰️' : kom.type === 'sprint' ? '⚡' : kom.type === 'descent' ? '⬇️' : '🏁';
     const typeLabel = kom.type === 'climb' ? 'Montée' : kom.type === 'sprint' ? 'Sprint' : kom.type === 'descent' ? 'Descente' : 'Parcours';
-    const medalColor = index === 0 ? 'from-yellow-500 to-yellow-600' : index === 1 ? 'from-gray-400 to-gray-500' : 'from-orange-600 to-orange-700';
-    const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉';
+    const medalColor = index === 0 ? 'from-yellow-500 to-yellow-600' : index === 1 ? 'from-gray-400 to-gray-500' : index === 2 ? 'from-orange-600 to-orange-700' : 'from-slate-600 to-slate-700';
+    const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '🏃';
 
     return `
       <div class="glass rounded-2xl p-6 border-2 border-yellow-500/30 hover:border-yellow-500/50 transition">

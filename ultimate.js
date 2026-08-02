@@ -2333,13 +2333,22 @@ function initMap() {
   if (map) return;
 
   // Carte centrée sur Bize (52500) - Vraies coordonnées
-  map = L.map('map').setView([48.0667, 5.6167], 14);
+  map = L.map('map', {
+    zoomControl: false,
+    attributionControl: false
+  }).setView([48.0667, 5.6167], 15);
 
-  // Tiles OpenStreetMap
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 19
+  // Style topographique sombre comme l'image
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    maxZoom: 17,
+    attribution: '© OpenTopoMap'
   }).addTo(map);
+
+  // Alternative: Stamen Terrain avec filtre sombre
+  // L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+  //   maxZoom: 20,
+  //   attribution: '© Stadia Maps'
+  // }).addTo(map);
 
   // Demander la position
   if (navigator.geolocation) {
@@ -2877,4 +2886,25 @@ function goToKOMOnMap(lat, lng) {
     if (!map) initMap();
     map.setView([lat, lng], 16);
   }, 300);
+}
+
+// Fonctions pour l'interface moderne du planificateur
+function closePlanner() {
+  showSection('dashboard');
+}
+
+function resetMapOrientation() {
+  if (map) {
+    map.setView([48.0667, 5.6167], 15);
+  }
+}
+
+function toggleMapLayers() {
+  // Toggle entre différents styles de carte
+  alert('Fonctionnalité bientôt disponible : changer le style de carte');
+}
+
+function toggle3D() {
+  // Future: vue 3D
+  alert('Vue 3D bientôt disponible !');
 }

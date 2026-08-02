@@ -2244,6 +2244,18 @@ const komDatabase = [
     ]
   },
   {
+    name: "Descente Foyer Suzanne - Mairie",
+    lat: 48.0660, lng: 5.6160,
+    distance: 0.55, elevation: -22, avgGrade: -4.0, maxGrade: -7.5,
+    type: "descent",
+    segment: [[48.0670, 5.6150], [48.0665, 5.6155], [48.0660, 5.6160], [48.0655, 5.6165]],
+    records: [
+      { name: "Julien R.", time: "1:25", date: "2024-04-18" },
+      { name: "Sophie L.", time: "1:38", date: "2024-03-22" },
+      { name: "Antoine B.", time: "1:45", date: "2024-02-10" }
+    ]
+  },
+  {
     name: "Sprint Sortie Est",
     lat: 48.0670, lng: 5.6200,
     distance: 0.72, elevation: 8, avgGrade: 1.1, maxGrade: 2.8,

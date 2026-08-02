@@ -2333,19 +2333,13 @@ function initMap() {
   if (map) return;
 
   // Carte centrée sur Bize (52500) - Vraies coordonnées
-  map = L.map('map', {
-    zoomControl: false,
-    attributionControl: false
-  }).setView([48.0667, 5.6167], 15);
+  map = L.map('map').setView([48.0667, 5.6167], 14);
 
-  // Apple Maps style - Propre et moderne
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // Style Apple Maps - CartoDB Voyager (propre et moderne)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap, © CARTO',
     maxZoom: 19
   }).addTo(map);
-
-  // Ajouter un filtre CSS pour style Apple Maps
-  const mapElement = document.getElementById('map');
-  mapElement.style.filter = 'brightness(0.95) contrast(1.1) saturate(0.9)';
 
   // Demander la position
   if (navigator.geolocation) {

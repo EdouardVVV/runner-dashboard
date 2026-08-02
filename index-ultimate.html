@@ -584,85 +584,97 @@
 
       <!-- SECTION: PLANIFICATEUR DE TRACÉ -->
       <div id="section-planner" class="space-y-6 hidden">
-        <!-- Carte en plein écran style moderne -->
-        <div class="relative w-full h-screen -m-6">
-          <div id="map" class="w-full h-full"></div>
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="map-pin" class="w-5 h-5 text-accent"></i>
+            Planificateur de Tracé
+          </h3>
 
-          <!-- Contrôles flottants en haut -->
-          <div class="absolute top-4 left-4 right-4 flex justify-between items-start z-1000 pointer-events-none">
-            <!-- Bouton retour -->
-            <button onclick="closePlanner()" class="bg-black/80 backdrop-blur-lg text-white w-12 h-12 rounded-full flex items-center justify-center pointer-events-auto shadow-xl">
-              <i data-lucide="chevron-down" class="w-6 h-6"></i>
+          <!-- Mode de tracé -->
+          <div class="mb-4 flex gap-3">
+            <button onclick="setRouteMode('walk')" id="btn-mode-walk" class="flex-1 bg-accent/10 text-accent px-4 py-2 rounded-lg transition flex items-center justify-center gap-2 font-medium">
+              <i data-lucide="footprints" class="w-4 h-4"></i>
+              Course à pied
             </button>
-
-            <!-- Boussole -->
-            <button onclick="resetMapOrientation()" class="bg-black/80 backdrop-blur-lg text-white w-12 h-12 rounded-full flex items-center justify-center pointer-events-auto shadow-xl">
-              <span class="font-bold text-sm">N</span>
-            </button>
-          </div>
-
-          <!-- Boutons latéraux droite -->
-          <div class="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-3 z-1000 pointer-events-none">
-            <!-- Bouton couches -->
-            <button onclick="toggleMapLayers()" class="bg-black/80 backdrop-blur-lg text-white w-12 h-12 rounded-full flex items-center justify-center pointer-events-auto shadow-xl">
-              <i data-lucide="layers" class="w-5 h-5"></i>
-            </button>
-
-            <!-- Bouton 3D -->
-            <button onclick="toggle3D()" class="bg-black/80 backdrop-blur-lg text-white w-12 h-12 rounded-full flex items-center justify-center pointer-events-auto shadow-xl">
-              <span class="font-bold text-xs">3D</span>
-            </button>
-
-            <!-- Bouton localisation -->
-            <button onclick="centerMapOnLocation()" class="bg-accent backdrop-blur-lg text-black w-12 h-12 rounded-full flex items-center justify-center pointer-events-auto shadow-xl">
-              <i data-lucide="locate-fixed" class="w-5 h-5"></i>
+            <button onclick="setRouteMode('bike')" id="btn-mode-bike" class="flex-1 bg-white/5 text-slate-400 px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+              <i data-lucide="bike" class="w-4 h-4"></i>
+              Vélo
             </button>
           </div>
 
-          <!-- Panel info en bas -->
-          <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/90 to-transparent backdrop-blur-xl p-6 pb-8 z-1000 pointer-events-none">
-            <div class="pointer-events-auto">
-              <!-- Mode selection -->
-              <div class="flex gap-2 mb-4">
-                <button onclick="setRouteMode('walk')" id="btn-mode-walk"
-                        class="flex-1 bg-accent text-black px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 font-semibold">
-                  <i data-lucide="footprints" class="w-5 h-5"></i>
-                  Course
-                </button>
-                <button onclick="setRouteMode('bike')" id="btn-mode-bike"
-                        class="flex-1 bg-white/10 text-white px-4 py-3 rounded-xl transition flex items-center justify-center gap-2 font-semibold">
-                  <i data-lucide="bike" class="w-5 h-5"></i>
-                  Vélo
-                </button>
-              </div>
+          <!-- Carte interactive -->
+          <div class="mb-4">
+            <div id="map" class="w-full h-96 rounded-xl bg-surface-800 relative overflow-hidden border border-white/10"></div>
+            <p class="text-xs text-slate-400 mt-2">
+              📍 <b>Clique 2 points</b> pour créer un tracé qui suit automatiquement les routes • <b>Ajoute des points</b> pour affiner le parcours
+            </p>
+          </div>
 
-              <!-- Stats inline -->
-              <div class="grid grid-cols-3 gap-3 mb-4">
-                <div class="bg-white/10 backdrop-blur-lg rounded-xl p-3 text-center">
-                  <div class="text-xs text-white/60 mb-1">Distance</div>
-                  <div class="text-lg font-bold text-white" id="planner-distance">0.00 km</div>
-                </div>
-                <div class="bg-white/10 backdrop-blur-lg rounded-xl p-3 text-center">
-                  <div class="text-xs text-white/60 mb-1">Dénivelé</div>
-                  <div class="text-lg font-bold text-accentBlue" id="planner-elevation">0 m</div>
-                </div>
-                <div class="bg-white/10 backdrop-blur-lg rounded-xl p-3 text-center">
-                  <div class="text-xs text-white/60 mb-1">Temps</div>
-                  <div class="text-lg font-bold text-accent" id="planner-time-target">--:--</div>
-                </div>
+          <!-- Contrôles -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div>
+              <label class="text-sm text-slate-400 mb-2 block">Pace cible (min/km)</label>
+              <input type="text" id="target-pace" placeholder="5:30"
+                     class="w-full bg-surface-800 border border-white/10 rounded-lg px-4 py-2 focus:border-accent focus:outline-none"
+                     oninput="updatePlannerEstimates()">
+            </div>
+            <div>
+              <label class="text-sm text-slate-400 mb-2 block">Distance estimée</label>
+              <div class="bg-surface-800 border border-white/10 rounded-lg px-4 py-2 font-mono text-accent" id="planner-distance">
+                0.00 km
               </div>
-
-              <!-- Actions -->
-              <div class="flex gap-2">
-                <button onclick="clearRoute()" class="flex-1 bg-red-500/20 text-red-400 px-4 py-3 rounded-xl font-semibold">
-                  Effacer
-                </button>
-                <button onclick="saveRoute()" class="flex-1 bg-accent text-black px-4 py-3 rounded-xl font-semibold">
-                  Sauvegarder
-                </button>
+            </div>
+            <div>
+              <label class="text-sm text-slate-400 mb-2 block">Dénivelé positif</label>
+              <div class="bg-surface-800 border border-white/10 rounded-lg px-4 py-2 font-mono text-accentBlue" id="planner-elevation">
+                0 m
               </div>
             </div>
           </div>
+
+          <!-- Estimations -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="glass rounded-xl p-4 border border-accent/20">
+              <div class="text-xs text-accent mb-1 uppercase tracking-wider">Temps estimé (pace cible)</div>
+              <div class="text-3xl font-bold text-accent" id="planner-time-target">--:--</div>
+            </div>
+            <div class="glass rounded-xl p-4 border border-accentOrange/20">
+              <div class="text-xs text-accentOrange mb-1 uppercase tracking-wider">Temps maximum</div>
+              <div class="text-3xl font-bold text-accentOrange" id="planner-time-max">--:--</div>
+              <p class="text-xs text-slate-400 mt-1">Basé sur ton meilleur pace actuel</p>
+            </div>
+          </div>
+
+          <!-- Boutons -->
+          <div class="flex gap-3">
+            <button onclick="clearRoute()" class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              Effacer
+            </button>
+            <button onclick="centerMapOnLocation()" class="flex-1 bg-accent/10 hover:bg-accent/20 text-accent px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+              <i data-lucide="locate-fixed" class="w-4 h-4"></i>
+              Ma position
+            </button>
+            <button onclick="saveRoute()" class="flex-1 bg-accentBlue/10 hover:bg-accentBlue/20 text-accentBlue px-4 py-2 rounded-lg transition flex items-center justify-center gap-2">
+              <i data-lucide="save" class="w-4 h-4"></i>
+              Sauvegarder
+            </button>
+          </div>
+        </div>
+
+        <!-- KOM suggérés -->
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+            <i data-lucide="trophy" class="w-5 h-5 text-accentOrange"></i>
+            KOM à proximité
+          </h3>
+          <div id="kom-list" class="space-y-3"></div>
+        </div>
+
+        <!-- Routes sauvegardées -->
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-lg font-bold mb-4">Mes tracés sauvegardés</h3>
+          <div id="saved-routes" class="space-y-3"></div>
         </div>
       </div>
 

@@ -2338,17 +2338,14 @@ function initMap() {
     attributionControl: false
   }).setView([48.0667, 5.6167], 15);
 
-  // Style topographique sombre comme l'image
-  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
-    maxZoom: 17,
-    attribution: '© OpenTopoMap'
+  // Apple Maps style - Propre et moderne
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19
   }).addTo(map);
 
-  // Alternative: Stamen Terrain avec filtre sombre
-  // L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-  //   maxZoom: 20,
-  //   attribution: '© Stadia Maps'
-  // }).addTo(map);
+  // Ajouter un filtre CSS pour style Apple Maps
+  const mapElement = document.getElementById('map');
+  mapElement.style.filter = 'brightness(0.95) contrast(1.1) saturate(0.9)';
 
   // Demander la position
   if (navigator.geolocation) {

@@ -2232,6 +2232,18 @@ let komMarkers = [];
 // KOM autour de Bize (52500 - Haute-Marne) - Vraies coordonnées : 48.0667, 5.6167
 const komDatabase = [
   {
+    name: "Tracé Strava Principal",
+    lat: 47.83854, lng: 5.63272,
+    distance: 0.85, elevation: 42, avgGrade: 4.9, maxGrade: 8.2,
+    type: "climb",
+    segment: [[47.83700, 5.63150], [47.83777, 5.63211], [47.83854, 5.63272], [47.83931, 5.63333]],
+    records: [
+      { name: "Thomas V.", time: "3:15", date: "2024-04-20" },
+      { name: "Marion K.", time: "3:42", date: "2024-03-28" },
+      { name: "Lucas B.", time: "3:55", date: "2024-02-18" }
+    ]
+  },
+  {
     name: "Montée Rue des Chenevières",
     lat: 48.0667, lng: 5.6167,
     distance: 0.58, elevation: 35, avgGrade: 6.0, maxGrade: 9.2,

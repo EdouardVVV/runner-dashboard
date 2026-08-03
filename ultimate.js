@@ -3060,6 +3060,12 @@ function analyzeTraining() {
     sessions++;
   }
 
+  // Calculer les jours de repos automatiquement
+  // Si c'est un format "Séance 1, Séance 2..." → 7 jours - nb séances = repos
+  if (sessions > 0 && restDays === 0) {
+    restDays = Math.max(0, 7 - sessions);
+  }
+
   // Calculer la note
   let rating = 5;
   if (totalKm >= 40 && totalKm <= 80) rating = 8;

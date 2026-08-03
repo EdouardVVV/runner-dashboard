@@ -2923,20 +2923,81 @@ function analyzeTraining() {
     const lowerLine = line.toLowerCase();
 
     // Compter les repos
-    if (lowerLine.includes('repos') || lowerLine.includes('rest')) {
+    if (lowerLine.includes('repos') || lowerLine.includes('rest') || lowerLine.includes('off')) {
       restDays++;
       return;
     }
 
-    // Extraire les km (10km, 8 km, etc.)
+    let lineKm = 0;
+    let hasSession = false;
+
+    // 1. Extraire les km directs (10km, 8 km, 5.5km)
     const kmMatches = line.match(/(\d+(?:\.\d+)?)\s*km/gi);
     if (kmMatches) {
-      sessions++;
+      hasSession = true;
       kmMatches.forEach(match => {
         const km = parseFloat(match.replace(/km/i, ''));
-        totalKm += km;
-        details.push({ line, km });
+        lineKm += km;
       });
+    }
+
+    // 2. Extraire les fractionnés (3x1000m, 6x400m, 10x200)
+    const fracMatches = line.match(/(\d+)\s*x\s*(\d+)\s*(m|metres?|meters?)?/gi);
+    if (fracMatches) {
+      hasSession = true;
+      fracMatches.forEach(match => {
+        const parts = match.match(/(\d+)\s*x\s*(\d+)/i);
+        if (parts) {
+          const reps = parseInt(parts[1]);
+          const distance = parseInt(parts[2]);
+          // Convertir en km
+          const km = (reps * distance) / 1000;
+          lineKm += km;
+        }
+      });
+    }
+
+    // 3. Extraire les temps (45min, 1h30, 90min) et estimer les km
+    const timeMatches = line.match(/(\d+)\s*(min|minutes?|h|heures?)/gi);
+    if (timeMatches && !kmMatches && !fracMatches) {
+      hasSession = true;
+      let totalMinutes = 0;
+
+      timeMatches.forEach(match => {
+        const parts = match.match(/(\d+)\s*(min|minutes?|h|heures?)/i);
+        if (parts) {
+          const value = parseInt(parts[1]);
+          const unit = parts[2].toLowerCase();
+          if (unit.includes('h')) {
+            totalMinutes += value * 60;
+          } else {
+            totalMinutes += value;
+          }
+        }
+      });
+
+      // Estimer km avec une allure moyenne de 5:30/km (environ 11 km/h)
+      // Si allure spécifiée dans la ligne, l'utiliser
+      const paceMatch = line.match(/(\d+):(\d+)\s*\/?\s*km/i);
+      let paceMinPerKm = 5.5; // défaut 5:30/km
+
+      if (paceMatch) {
+        const min = parseInt(paceMatch[1]);
+        const sec = parseInt(paceMatch[2]);
+        paceMinPerKm = min + sec / 60;
+      } else if (lowerLine.includes('lent') || lowerLine.includes('récup') || lowerLine.includes('recup')) {
+        paceMinPerKm = 6.5; // 6:30/km pour récup
+      } else if (lowerLine.includes('rapide') || lowerLine.includes('seuil') || lowerLine.includes('tempo')) {
+        paceMinPerKm = 4.5; // 4:30/km pour tempo
+      }
+
+      lineKm += totalMinutes / paceMinPerKm;
+    }
+
+    if (hasSession) {
+      sessions++;
+      totalKm += lineKm;
+      details.push({ line, km: lineKm });
     }
   });
 
@@ -2948,6 +3009,7 @@ function analyzeTraining() {
   if (totalKm < 20) rating = 3;
   if (restDays < 1) rating -= 1;
   if (sessions < 3) rating -= 1;
+  rating = Math.max(0, Math.min(10, rating));
 
   // Générer l'analyse
   let analysis = '';

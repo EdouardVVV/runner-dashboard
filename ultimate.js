@@ -2903,8 +2903,276 @@ function goToKOMOnMap(lat, lng) {
   }, 300);
 }
 
-// ===== ANALYSE D'ENTRAÎNEMENT =====
+// ===== ANALYSE D'ENTRAÎNEMENT V2 - ULTRA INTELLIGENT =====
 function analyzeTraining() {
+  const input = document.getElementById('training-input').value.trim();
+
+  if (!input) {
+    alert('❌ Entre ton planning d\'entraînement d\'abord !');
+    return;
+  }
+
+  const result = parseTrainingPlanV2(input);
+  const totalKm = result.totalKm;
+  const sessions = result.nbSessions;
+  const restDays = result.restDays;
+
+  // Calculer la note
+  let rating = 5;
+  if (totalKm >= 40 && totalKm <= 80) rating = 8;
+  if (totalKm >= 80 && totalKm <= 100) rating = 9;
+  if (totalKm > 100) rating = 10;
+  if (totalKm < 20) rating = 3;
+  if (restDays < 1) rating -= 1;
+  if (sessions < 3) rating -= 1;
+  rating = Math.max(0, Math.min(10, rating));
+
+  // Générer l'analyse
+  let analysis = '';
+  let recommendations = [];
+
+  if (totalKm < 30) {
+    analysis = `⚠️ <b>Volume faible</b> : Avec seulement <b>${totalKm} km</b> cette semaine, tu es en phase de récupération ou de reprise. C'est bien pour la récup, mais insuffisant pour progresser si c'est ton volume habituel.`;
+    recommendations.push('📈 Augmente progressivement ton kilométrage de 10% par semaine');
+    recommendations.push('🎯 Vise au moins 40-50km/semaine pour progresser');
+  } else if (totalKm >= 30 && totalKm < 60) {
+    analysis = `✅ <b>Volume correct</b> : <b>${totalKm} km</b> sur la semaine, c'est un bon volume pour maintenir ta forme ou progresser doucement. Tu as <b>${sessions} séances</b> ce qui est bien réparti.`;
+    recommendations.push('💪 Ajoute une sortie longue le week-end pour améliorer l\'endurance');
+    recommendations.push('⚡ Intègre 1 séance de fractionné par semaine');
+  } else if (totalKm >= 60 && totalKm <= 100) {
+    analysis = `🔥 <b>Excellent volume</b> : <b>${totalKm} km</b> cette semaine ! C'est un volume sérieux qui va te faire progresser. Avec <b>${sessions} séances</b> et <b>${restDays} jour(s) de repos</b>, l'équilibre est bon.`;
+    recommendations.push('🎯 Continue comme ça, c\'est top !');
+    recommendations.push('💧 Hydrate-toi bien et dors suffisamment');
+    recommendations.push('🍽️ Surveille ta nutrition pour soutenir ce volume');
+  } else {
+    analysis = `🚀 <b>Volume très élevé</b> : <b>${totalKm} km</b> ! Tu es un guerrier ! Mais attention à la fatigue et aux blessures avec un tel volume. Assure-toi d'avoir assez de récupération.`;
+    recommendations.push('⚠️ Surveille les signes de surentraînement (fatigue, sommeil, rythme cardiaque)');
+    recommendations.push('🧘 Intègre du stretching et de la mobilité');
+    recommendations.push('😴 Priorise le sommeil (8h minimum)');
+  }
+
+  // Critique des repos
+  if (restDays === 0) {
+    analysis += `<br><br>⚠️ <b>Aucun jour de repos</b> : Ton corps a besoin de récupérer ! Ajoute au moins 1-2 jours de repos complet par semaine.`;
+    recommendations.push('🛌 Ajoute 1-2 jours de repos complet dans la semaine');
+  } else if (restDays === 1) {
+    analysis += `<br><br>✅ Tu as <b>${restDays} jour de repos</b>, c'est bien mais tu pourrais en ajouter un deuxième si tu sens de la fatigue.`;
+  } else {
+    analysis += `<br><br>✅ Tu as <b>${restDays} jours de repos</b>, c'est parfait pour la récupération !`;
+  }
+
+  // Critique des séances
+  if (sessions < 3) {
+    analysis += `<br><br>⚠️ Seulement <b>${sessions} séances</b> cette semaine. Pour progresser, vise au moins 3-4 séances.`;
+  } else if (sessions >= 5) {
+    analysis += `<br><br>💪 <b>${sessions} séances</b> dans la semaine, c'est un beau rythme ! Assure-toi de varier les intensités.`;
+  }
+
+  // Afficher les résultats
+  document.getElementById('total-km').textContent = `${totalKm} km`;
+  document.getElementById('total-sessions').textContent = sessions;
+  document.getElementById('global-rating').textContent = `${rating}/10`;
+  document.getElementById('ai-analysis').innerHTML = analysis;
+
+  const recoHTML = recommendations.map(r => `
+    <div class="bg-surface-800/50 rounded-lg p-4 border-l-4 border-accent">
+      <p class="text-sm">${r}</p>
+    </div>
+  `).join('');
+  document.getElementById('recommendations').innerHTML = recoHTML;
+
+  // Afficher la section résultats
+  document.getElementById('analysis-results').classList.remove('hidden');
+
+  // Scroll vers les résultats
+  setTimeout(() => {
+    document.getElementById('analysis-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
+// PARSER V2 - ULTRA INTELLIGENT
+function parseTrainingPlanV2(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+
+  let sessions = [];
+  let currentSession = null;
+  let totalKm = 0;
+
+  lines.forEach(line => {
+    const lower = line.toLowerCase();
+
+    // Détection nouvelle séance
+    if (lower.match(/séance\s+\d+/i) ||
+        lower.match(/^(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\s*:/i)) {
+
+      // Sauvegarder séance précédente
+      if (currentSession && currentSession.km > 0) {
+        sessions.push(currentSession);
+        totalKm += currentSession.km;
+      }
+
+      currentSession = { name: line, km: 0, lines: [] };
+      return;
+    }
+
+    // Skip lignes de renforcement
+    if (lower.includes('gainage') || lower.includes('squat') || lower.includes('fente') ||
+        lower.includes('hip thrust') || lower.includes('mollet') || lower.includes('proprioception') ||
+        lower.match(/^\s*\*/)) {
+      return;
+    }
+
+    if (!currentSession) {
+      currentSession = { name: 'Session', km: 0, lines: [] };
+    }
+
+    let lineKm = 0;
+
+    // 1. KM directs
+    const kmMatch = line.match(/(\d+(?:\.\d+)?)\s*km/gi);
+    if (kmMatch) {
+      kmMatch.forEach(m => {
+        lineKm += parseFloat(m.replace(/km/i, ''));
+      });
+    }
+
+    // 2. Fractionnés mètres: 5 × 1 000 m, 10×400m, 6 × 800 m
+    const fracM = line.match(/(\d+)\s*[×x]\s*(\d+(?:\s+\d+)?)\s*m(?!in)/gi);
+    if (fracM) {
+      fracM.forEach(m => {
+        const parts = m.match(/(\d+)\s*[×x]\s*(\d+(?:\s+\d+)?)/i);
+        if (parts) {
+          const reps = parseInt(parts[1]);
+          const dist = parseInt(parts[2].replace(/\s+/g, ''));
+          lineKm += (reps * dist) / 1000;
+        }
+      });
+    }
+
+    // 3. Séries avec temps: 2 × 8 × 200 m
+    const fracMulti = line.match(/(\d+)\s*[×x]\s*(\d+)\s*[×x]\s*(\d+)\s*m/gi);
+    if (fracMulti) {
+      fracMulti.forEach(m => {
+        const parts = m.match(/(\d+)\s*[×x]\s*(\d+)\s*[×x]\s*(\d+)/i);
+        if (parts) {
+          const series = parseInt(parts[1]);
+          const reps = parseInt(parts[2]);
+          const dist = parseInt(parts[3]);
+          lineKm += (series * reps * dist) / 1000;
+        }
+      });
+    }
+
+    // 4. Temps avec allure: 20', 1h15, 50min, 1h20 à 1h25
+    let minutes = 0;
+
+    // Format: 1h20 à 1h25 ou 1h20
+    const timeHM = line.match(/(\d+)h(\d+)/gi);
+    if (timeHM) {
+      timeHM.forEach(t => {
+        const p = t.match(/(\d+)h(\d+)/i);
+        if (p) minutes += parseInt(p[1]) * 60 + parseInt(p[2]);
+      });
+      if (timeHM.length > 1) minutes = minutes / 2; // Moyenne
+    }
+
+    // Format: 20', 50'
+    const timeMin = line.match(/(\d+)'/g);
+    if (timeMin && !timeHM) {
+      timeMin.forEach(t => {
+        minutes += parseInt(t.replace("'", ''));
+      });
+    }
+
+    // Format: 50min, 65 min
+    const timeWord = line.match(/(\d+)\s*min(?!\/)/gi);
+    if (timeWord && !timeMin && !timeHM) {
+      timeWord.forEach(t => {
+        minutes += parseInt(t.replace(/min/i, ''));
+      });
+    }
+
+    // 5. Secondes (30''/30'', 30 s, 42 à 44 s)
+    const timeSec = line.match(/(\d+)''/g);
+    if (timeSec) {
+      timeSec.forEach(t => {
+        minutes += parseInt(t.replace("''", '')) / 60;
+      });
+    }
+
+    if (minutes > 0 && !kmMatch) {
+      // Détecter allure
+      let pace = 5.33; // défaut EF
+
+      // Allure explicite: 4'02/km, 5'10 à 5'35/km
+      const paceExplicit = line.match(/(\d+)'(\d+)/);
+      if (paceExplicit) {
+        pace = parseInt(paceExplicit[1]) + parseInt(paceExplicit[2]) / 60;
+      }
+      // Allure VMA
+      else if (lower.includes('vma') || lower.includes('3'45') || lower.includes('3'50')) {
+        pace = 3.75;
+      }
+      else if (lower.includes('seuil') || lower.match(/4'0\d/)) {
+        pace = 4.08;
+      }
+      else if (lower.includes('ef') || lower.includes('endurance fondamentale') ||
+               lower.includes('échauffement') || lower.includes('footing')) {
+        pace = 5.33;
+      }
+      else if (lower.includes('calme') || lower.includes('récup') || lower.includes('recup')) {
+        pace = 6.0;
+      }
+      else if (lower.includes('facile') || lower.includes('tranquille') || lower.includes('souple')) {
+        pace = 5.83;
+      }
+      else if (lower.includes('rapide') || lower.includes('vite')) {
+        pace = 4.0;
+      }
+
+      lineKm += minutes / pace;
+    }
+
+    // 6. Séries avec temps et allure: 3 × 12' à 4'02, 2 × 15' à 4'00/km
+    const seriesTime = line.match(/(\d+)\s*[×x]\s*(\d+)'\s*à/gi);
+    if (seriesTime) {
+      seriesTime.forEach(m => {
+        const p = m.match(/(\d+)\s*[×x]\s*(\d+)'/i);
+        if (p) {
+          const reps = parseInt(p[1]);
+          const mins = parseInt(p[2]);
+
+          // Chercher allure
+          const paceMatch = line.match(/(\d+)'(\d+)/);
+          let pace = 4.08;
+          if (paceMatch) {
+            pace = parseInt(paceMatch[1]) + parseInt(paceMatch[2]) / 60;
+          }
+
+          lineKm += (reps * mins) / pace;
+        }
+      });
+    }
+
+    if (lineKm > 0) {
+      currentSession.km += lineKm;
+      currentSession.lines.push({ text: line, km: lineKm });
+    }
+  });
+
+  // Sauvegarder dernière séance
+  if (currentSession && currentSession.km > 0) {
+    sessions.push(currentSession);
+    totalKm += currentSession.km;
+  }
+
+  return {
+    totalKm: parseFloat(totalKm.toFixed(1)),
+    sessions: sessions,
+    nbSessions: sessions.length,
+    restDays: Math.max(0, 7 - sessions.length)
+  };
+}
   const input = document.getElementById('training-input').value.trim();
 
   if (!input) {

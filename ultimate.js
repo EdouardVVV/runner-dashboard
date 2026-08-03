@@ -2958,14 +2958,16 @@ function analyzeTraining() {
       });
     }
 
-    // 2. Extraire les fractionnés avec temps spécifique (5 × 1000m, 6×400m, 10 × 100m)
-    const fracMatches = line.match(/(\d+)\s*[×x]\s*(\d+)\s*(m|metres?|meters?)?/gi);
+    // 2. Extraire les fractionnés avec espaces (5 × 1 000 m, 6×400m, 10 × 100 m)
+    // Matcher: "5 × 1 000" ou "6×400" ou "10 × 200"
+    const fracMatches = line.match(/(\d+)\s*[×x]\s*(\d+(?:\s+\d+)?)\s*m(?!in)/gi);
     if (fracMatches) {
       fracMatches.forEach(match => {
-        const parts = match.match(/(\d+)\s*[×x]\s*(\d+)/i);
+        const parts = match.match(/(\d+)\s*[×x]\s*(\d+(?:\s+\d+)?)/i);
         if (parts) {
           const reps = parseInt(parts[1]);
-          const distance = parseInt(parts[2]);
+          // Enlever les espaces dans le nombre (1 000 → 1000)
+          const distance = parseInt(parts[2].replace(/\s+/g, ''));
           const km = (reps * distance) / 1000;
           lineKm += km;
         }

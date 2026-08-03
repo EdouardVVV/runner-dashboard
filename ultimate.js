@@ -2903,6 +2903,115 @@ function goToKOMOnMap(lat, lng) {
   }, 300);
 }
 
+// ===== ANALYSE D'ENTRAÎNEMENT =====
+function analyzeTraining() {
+  const input = document.getElementById('training-input').value.trim();
+
+  if (!input) {
+    alert('❌ Entre ton planning d\'entraînement d\'abord !');
+    return;
+  }
+
+  // Parser le texte pour extraire les km
+  const lines = input.split('\n').filter(line => line.trim());
+  let totalKm = 0;
+  let sessions = 0;
+  let restDays = 0;
+  const details = [];
+
+  lines.forEach(line => {
+    const lowerLine = line.toLowerCase();
+
+    // Compter les repos
+    if (lowerLine.includes('repos') || lowerLine.includes('rest')) {
+      restDays++;
+      return;
+    }
+
+    // Extraire les km (10km, 8 km, etc.)
+    const kmMatches = line.match(/(\d+(?:\.\d+)?)\s*km/gi);
+    if (kmMatches) {
+      sessions++;
+      kmMatches.forEach(match => {
+        const km = parseFloat(match.replace(/km/i, ''));
+        totalKm += km;
+        details.push({ line, km });
+      });
+    }
+  });
+
+  // Calculer la note
+  let rating = 5;
+  if (totalKm >= 40 && totalKm <= 80) rating = 8;
+  if (totalKm >= 80 && totalKm <= 100) rating = 9;
+  if (totalKm > 100) rating = 10;
+  if (totalKm < 20) rating = 3;
+  if (restDays < 1) rating -= 1;
+  if (sessions < 3) rating -= 1;
+
+  // Générer l'analyse
+  let analysis = '';
+  let recommendations = [];
+
+  if (totalKm < 30) {
+    analysis = `⚠️ <b>Volume faible</b> : Avec seulement <b>${totalKm.toFixed(1)} km</b> cette semaine, tu es en phase de récupération ou de reprise. C'est bien pour la récup, mais insuffisant pour progresser si c'est ton volume habituel.`;
+    recommendations.push('📈 Augmente progressivement ton kilométrage de 10% par semaine');
+    recommendations.push('🎯 Vise au moins 40-50km/semaine pour progresser');
+  } else if (totalKm >= 30 && totalKm < 60) {
+    analysis = `✅ <b>Volume correct</b> : <b>${totalKm.toFixed(1)} km</b> sur la semaine, c'est un bon volume pour maintenir ta forme ou progresser doucement. Tu as <b>${sessions} séances</b> ce qui est bien réparti.`;
+    recommendations.push('💪 Ajoute une sortie longue le week-end pour améliorer l\'endurance');
+    recommendations.push('⚡ Intègre 1 séance de fractionné par semaine');
+  } else if (totalKm >= 60 && totalKm <= 100) {
+    analysis = `🔥 <b>Excellent volume</b> : <b>${totalKm.toFixed(1)} km</b> cette semaine ! C'est un volume sérieux qui va te faire progresser. Avec <b>${sessions} séances</b> et <b>${restDays} jour(s) de repos</b>, l'équilibre est bon.`;
+    recommendations.push('🎯 Continue comme ça, c\'est top !');
+    recommendations.push('💧 Hydrate-toi bien et dors suffisamment');
+    recommendations.push('🍽️ Surveille ta nutrition pour soutenir ce volume');
+  } else {
+    analysis = `🚀 <b>Volume très élevé</b> : <b>${totalKm.toFixed(1)} km</b> ! Tu es un guerrier ! Mais attention à la fatigue et aux blessures avec un tel volume. Assure-toi d'avoir assez de récupération.`;
+    recommendations.push('⚠️ Surveille les signes de surentraînement (fatigue, sommeil, rythme cardiaque)');
+    recommendations.push('🧘 Intègre du stretching et de la mobilité');
+    recommendations.push('😴 Priorise le sommeil (8h minimum)');
+  }
+
+  // Critique des repos
+  if (restDays === 0) {
+    analysis += `<br><br>⚠️ <b>Aucun jour de repos</b> : Ton corps a besoin de récupérer ! Ajoute au moins 1-2 jours de repos complet par semaine.`;
+    recommendations.push('🛌 Ajoute 1-2 jours de repos complet dans la semaine');
+  } else if (restDays === 1) {
+    analysis += `<br><br>✅ Tu as <b>${restDays} jour de repos</b>, c'est bien mais tu pourrais en ajouter un deuxième si tu sens de la fatigue.`;
+  } else {
+    analysis += `<br><br>✅ Tu as <b>${restDays} jours de repos</b>, c'est parfait pour la récupération !`;
+  }
+
+  // Critique des séances
+  if (sessions < 3) {
+    analysis += `<br><br>⚠️ Seulement <b>${sessions} séances</b> cette semaine. Pour progresser, vise au moins 3-4 séances.`;
+  } else if (sessions >= 5) {
+    analysis += `<br><br>💪 <b>${sessions} séances</b> dans la semaine, c'est un beau rythme ! Assure-toi de varier les intensités.`;
+  }
+
+  // Afficher les résultats
+  document.getElementById('total-km').textContent = `${totalKm.toFixed(1)} km`;
+  document.getElementById('total-sessions').textContent = sessions;
+  document.getElementById('global-rating').textContent = `${rating}/10`;
+  document.getElementById('ai-analysis').innerHTML = analysis;
+
+  const recoHTML = recommendations.map(r => `
+    <div class="bg-surface-800/50 rounded-lg p-4 border-l-4 border-accent">
+      <p class="text-sm">${r}</p>
+    </div>
+  `).join('');
+  document.getElementById('recommendations').innerHTML = recoHTML;
+
+  // Afficher la section résultats
+  document.getElementById('analysis-results').classList.remove('hidden');
+
+  // Scroll vers les résultats
+  setTimeout(() => {
+    document.getElementById('analysis-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+}
+
 // Fonctions pour l'interface moderne du planificateur
 function closePlanner() {
   showSection('dashboard');

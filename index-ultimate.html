@@ -480,6 +480,9 @@
       <div class="sidebar-link px-3 py-2 rounded-lg text-sm font-medium text-slate-400 flex items-center gap-3" onclick="showSection('goals')">
         <i data-lucide="flag" class="w-4 h-4"></i> Objectifs
       </div>
+      <div class="sidebar-link px-3 py-2 rounded-lg text-sm font-medium text-slate-400 flex items-center gap-3" onclick="showSection('training-analysis')">
+        <i data-lucide="brain" class="w-4 h-4"></i> Analyse Entraînement
+      </div>
     </nav>
     <div class="p-4 border-t border-white/5" id="sidebar-profile">
       <div class="flex items-center gap-3">
@@ -548,6 +551,83 @@
       <div id="section-analytics" class="space-y-6 hidden"></div>
       <div id="section-training" class="space-y-6 hidden"></div>
       <div id="section-goals" class="space-y-6 hidden"></div>
+
+      <!-- SECTION: ANALYSE ENTRAÎNEMENT -->
+      <div id="section-training-analysis" class="space-y-6 hidden">
+        <div class="glass rounded-2xl p-6">
+          <h3 class="text-2xl font-bold mb-6 flex items-center gap-3">
+            <i data-lucide="brain" class="w-6 h-6 text-accent"></i>
+            Analyse de ton Entraînement
+          </h3>
+
+          <p class="text-slate-400 mb-6">
+            Colle ton planning d'entraînement de la semaine et l'IA va l'analyser, calculer les km totaux et te donner une critique constructive ! 🧠💪
+          </p>
+
+          <!-- Zone de texte pour coller le planning -->
+          <div class="mb-6">
+            <label class="text-sm font-semibold mb-2 block">📅 Ton planning de la semaine :</label>
+            <textarea id="training-input" rows="10"
+                      class="w-full bg-surface-800 border border-white/10 rounded-xl px-4 py-3 focus:border-accent focus:outline-none resize-none"
+                      placeholder="Exemple :
+Lundi : Repos
+Mardi : 8km endurance + 6x400m
+Mercredi : 10km allure marathon
+Jeudi : Repos
+Vendredi : 5km récup
+Samedi : Sortie longue 20km
+Dimanche : Repos"></textarea>
+          </div>
+
+          <!-- Bouton analyser -->
+          <button onclick="analyzeTraining()"
+                  class="w-full bg-gradient-to-r from-accent to-accentBlue text-black px-6 py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 hover:scale-105 transition">
+            <i data-lucide="sparkles" class="w-6 h-6"></i>
+            Analyser mon entraînement
+          </button>
+        </div>
+
+        <!-- Zone de résultats -->
+        <div id="analysis-results" class="hidden">
+          <!-- Stats globales -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="glass rounded-xl p-6 border border-accent/30">
+              <div class="text-xs text-accent mb-2 uppercase tracking-wider">Total Kilomètres</div>
+              <div class="text-4xl font-bold text-accent" id="total-km">0 km</div>
+            </div>
+            <div class="glass rounded-xl p-6 border border-accentBlue/30">
+              <div class="text-xs text-accentBlue mb-2 uppercase tracking-wider">Séances</div>
+              <div class="text-4xl font-bold text-accentBlue" id="total-sessions">0</div>
+            </div>
+            <div class="glass rounded-xl p-6 border border-accentOrange/30">
+              <div class="text-xs text-accentOrange mb-2 uppercase tracking-wider">Note Globale</div>
+              <div class="text-4xl font-bold text-accentOrange" id="global-rating">-/10</div>
+            </div>
+          </div>
+
+          <!-- Analyse détaillée -->
+          <div class="glass rounded-2xl p-6">
+            <h4 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <i data-lucide="message-square" class="w-5 h-5 text-accent"></i>
+              Analyse & Critique
+            </h4>
+            <div id="ai-analysis" class="prose prose-invert max-w-none">
+              <!-- Contenu généré par JS -->
+            </div>
+          </div>
+
+          <!-- Recommandations -->
+          <div class="glass rounded-2xl p-6">
+            <h4 class="text-xl font-bold mb-4 flex items-center gap-2">
+              <i data-lucide="lightbulb" class="w-5 h-5 text-accentOrange"></i>
+              Recommandations
+            </h4>
+            <div id="recommendations" class="space-y-3">
+              <!-- Contenu généré par JS -->
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- LOADING -->
       <div id="section-loading" class="hidden flex flex-col items-center justify-center min-h-[50vh]">

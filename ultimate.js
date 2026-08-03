@@ -3007,14 +3007,14 @@ function analyzeTraining() {
     if (totalMinutes > 0 && !kmMatches) {
       // Détecter l'allure dans la ligne (4'02 à 4'05/km ou 5'10 à 5'35/km)
       const paceMatch = line.match(/(\d+)'(\d+)/); // 4'02 ou 5'10
-      let paceMinPerKm = 5.5; // défaut
+      let paceMinPerKm = 5.33; // défaut 5:20/km pour EF
 
       if (paceMatch) {
         const min = parseInt(paceMatch[1]);
         const sec = parseInt(paceMatch[2]);
         paceMinPerKm = min + sec / 60;
       } else if (lowerLine.includes('ef') || lowerLine.includes('endurance fondamentale') || lowerLine.includes('footing')) {
-        paceMinPerKm = 5.5; // EF = 5:30/km
+        paceMinPerKm = 5.33; // EF = 5:20/km (moyenne entre 5:10 et 5:35)
       } else if (lowerLine.includes('seuil') || lowerLine.includes('tempo')) {
         paceMinPerKm = 4.2; // Seuil = 4:12/km
       } else if (lowerLine.includes('vma') || lowerLine.includes('rapide')) {

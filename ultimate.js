@@ -2941,10 +2941,17 @@ function analyzeTraining() {
         inSession = false;
         return;
       }
+      return; // Ne pas traiter cette ligne (juste le header)
     }
 
-    if (!inSession && !lowerLine.match(/séance\s+\d+/i)) {
-      inSession = true; // Mode par défaut si pas de structure
+    if (!inSession) {
+      return; // Skip les lignes hors séance
+    }
+
+    // Ignorer les lignes de renforcement musculaire
+    if (lowerLine.includes('gainage') || lowerLine.includes('squat') || lowerLine.includes('fente') ||
+        lowerLine.includes('hip thrust') || lowerLine.includes('mollet') || lowerLine.includes('*')) {
+      return;
     }
 
     let lineKm = 0;
